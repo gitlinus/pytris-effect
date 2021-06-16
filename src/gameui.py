@@ -5,9 +5,9 @@ import time
 from .utils import matrix
 
 pygame.init()
-m = matrix.Matrix()
 
 screen_width, screen_height = pyautogui.size()
+m = matrix.Matrix(2*screen_height//60) # matrix height should be roughly 2/3 of screen height
 vertical_offset = 50
 offset = 50
 screen_size = screen_width, screen_height-vertical_offset
