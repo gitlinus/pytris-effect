@@ -16,7 +16,7 @@ matrix_left_top = (screen_width-m.width)//2, (screen_height-m.height)//2
 
 pygame.display.set_caption('Pytris Effect')
 
-font_size = 32
+font_size = m.mino_dim
 font = pygame.font.Font(None,font_size)
 
 black = 0, 0, 0
