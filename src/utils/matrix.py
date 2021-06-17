@@ -39,6 +39,7 @@ class Matrix:
 		self.height = mino_dim * 20
 		self.matrix = np.zeros((22,10),dtype=int)
 		self.score = 0
+		self.lines_cleared = 0
 		self.tetrominos = tetromino.Tetromino()
 		self.current_tetromino = ""
 		self.mino_locations = []
@@ -48,6 +49,9 @@ class Matrix:
 
 	def getScore(self):
 		return self.score
+
+	def getLines(self):
+		return self.lines_cleared
 
 	def addTetromino(self): # set piece spawn location
 		self.tetrominos.nextTetromino()

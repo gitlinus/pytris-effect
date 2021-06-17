@@ -26,6 +26,19 @@ yellow = 255, 255, 0
 
 gravity = 1 # number of blocks per second at which the tetromino falls
 
+# text labels beside matrix
+class Label:
+    def __init__(self, font, text, colour, position, anchor="topleft"):
+        self.image = font.render(text, True, colour)
+        self.rect = self.image.get_rect()
+        setattr(self.rect, anchor, position)
+
+    def draw(self, surface):
+        surface.blit(self.image, self.rect)
+
+time_label = Label(font,"TIME",yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3))
+score_label = Label(font,"SCORE",yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+3*font_size))
+lines_label = Label(font,"LINES",yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+2*m.height//3),"topright")
 
 def drawMatrix(showGrid=True):
     pygame.draw.rect(screen,white,pygame.Rect(matrix_left_top,m.dim()))
@@ -72,8 +85,19 @@ def drawQueue():
 
 def drawHold():
     pass
+
+def drawText():
+    time_label.draw(screen)
+    Label(font,getTimer(),yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+font_size)).draw(screen)
+    score_label.draw(screen)
+    Label(font,getScore(),yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+4*font_size)).draw(screen)
+    lines_label.draw(screen)
+    Label(font,getStats(),yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+2*m.height//3+font_size),"topright").draw(screen)
+
+def getStats(): # number of lines cleared
+    return str(m.getLines())
         
-def drawTimer():
+def getTimer(): # time elapsed
     time_passed = pygame.time.get_ticks()
     hours = time_passed // 1000 // 60 // 60
     minutes = time_passed // 1000 // 60 % 60
@@ -82,16 +106,10 @@ def drawTimer():
     time_str += str(hours)+":" if hours != 0 else ""
     time_str += str(minutes)+":" if minutes >= 10 else "0"+str(minutes)+":"
     time_str += str(seconds) if seconds >= 10 else "0"+str(seconds)
-    text = font.render("TIME", True, yellow)
-    screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3))
-    text = font.render(str(time_str), True, yellow)
-    screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+font_size))
+    return time_str
 
-def drawScore():
-    text = font.render("SCORE", True, yellow)
-    screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+3*font_size))
-    text = font.render(str(m.getScore()), True, yellow)
-    screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+4*font_size))
+def getScore(): # current score
+    return str(m.getScore())
 
 # for testing purposes only
 m.addTetromino()
@@ -104,8 +122,7 @@ while 1:
 
     screen.fill(black)
     drawMatrix()
-    drawTimer()
-    drawScore()
+    drawText()
     pygame.display.flip()
 
     endtick = pygame.time.get_ticks()
