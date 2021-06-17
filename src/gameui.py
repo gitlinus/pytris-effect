@@ -2,6 +2,7 @@ import sys
 import pygame
 import pyautogui
 import time
+import numpy as np
 from .utils import matrix
 
 pygame.init()
@@ -80,8 +81,28 @@ def drawMatrix(showGrid=True):
                 (matrix_left_top[0]+m.width,matrix_left_top[1]+(i-1)*m.mino_dim)
             )
 
-def drawQueue():
-    pass
+def drawQueue(length=5): # max queue length of 5
+    if(length>5): 
+        length = 5
+    queue = m.getQueue()
+    drawingSpace = np.zeros((3,4),dtype=int)
+
+    for i in range(length):
+        tetr = queue[i]
+        tetr_mat = m.tetromino2matrix[tetr]
+        drawingSpace[0:tetr_mat.shape[0],0:tetr_mat.shape[1]] += tetr_mat
+
+        for row in range(drawingSpace.shape[0]):
+            for col in range(drawingSpace.shape[1]):
+                if drawingSpace[row,col] != 0:
+                    pygame.draw.rect(
+                        screen,
+                        m.index2rgb[drawingSpace[row,col]],
+                        pygame.Rect((matrix_left_top[0]+m.width+offset+col*m.mino_dim,
+                                    matrix_left_top[1]+(3*i+row-2)*m.mino_dim),
+                                    (m.mino_dim,m.mino_dim))
+                    )
+                    drawingSpace[row,col] = 0
 
 def drawHold():
     pass
@@ -122,6 +143,7 @@ while 1:
 
     screen.fill(black)
     drawMatrix()
+    drawQueue()
     drawText()
     pygame.display.flip()
 

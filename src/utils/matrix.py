@@ -47,6 +47,9 @@ class Matrix:
 	def dim(self):
 		return self.width, self.height
 
+	def getQueue(self):
+		return self.tetrominos.getQueue()
+
 	def getScore(self):
 		return self.score
 
