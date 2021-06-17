@@ -26,18 +26,34 @@ yellow = 255, 255, 0
 
 
 def drawMatrix(showGrid=True):
+
     pygame.draw.rect(screen,white,pygame.Rect(matrix_left_top,m.dim()))
+
+    # draw piece spawn area:
+    for i in range(2):
+        for j in range(10):
+            if m.matrix[i,j]!=0:
+                pygame.draw.rect(
+                    screen,
+                    m.index2rgb[m.matrix[i,j]],
+                    pygame.Rect((matrix_left_top[0]+j*m.mino_dim,
+                                matrix_left_top[1]-(2-i)*m.mino_dim),
+                                (m.mino_dim,m.mino_dim))
+                )
+
+    # draw grid
     if showGrid:
         for i in range(11): #vertical lines
             pygame.draw.line(screen,grey,
-                (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]),
+                (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]-2*m.mino_dim),
                 (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]+m.height)
             )
-        for i in range(21): #horizontal lines
+        for i in range(22): #horizontal lines
             pygame.draw.line(screen,grey,
-                (matrix_left_top[0],matrix_left_top[1]+i*m.mino_dim),
-                (matrix_left_top[0]+m.width,matrix_left_top[1]+i*m.mino_dim)
+                (matrix_left_top[0],matrix_left_top[1]+(i-1)*m.mino_dim),
+                (matrix_left_top[0]+m.width,matrix_left_top[1]+(i-1)*m.mino_dim)
             )
+
         
 def drawTimer():
     time_passed = pygame.time.get_ticks()
@@ -58,7 +74,9 @@ def drawScore():
     screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+3*font_size))
     text = font.render(str(m.getScore()), True, yellow)
     screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+4*font_size))
-    
+
+m.addTetromino()
+print(m.matrix)
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()

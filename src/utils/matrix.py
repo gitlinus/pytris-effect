@@ -3,6 +3,10 @@ from . import tetromino
 
 class Matrix:
 
+	# colour assignment
+	index2rgb = {0:(0,0,0),1:(0,255,255),2:(0,0,255),3:(255,128,0),4:(255,255,0),5:(0,255,0),6:(255,0,255),7:(255,0,0)}
+	tetromino2rgb = {'I':(0,255,255),'J':(0,0,255),'L':(255,128,0),'O':(255,255,0),'S':(0,255,0),'T':(255,0,255),'Z':(255,0,0)}
+	
 	tetromino2matrix = {
 		'I':np.asarray([[1,1,1,1]],dtype=int),
 		'J':np.asarray([[2,0,0],
