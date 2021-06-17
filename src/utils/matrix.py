@@ -47,6 +47,9 @@ class Matrix:
 	def dim(self):
 		return self.width, self.height
 
+	def getHold(self):
+		return self.tetrominos.getHold()
+
 	def getQueue(self):
 		return self.tetrominos.getQueue()
 
@@ -58,6 +61,22 @@ class Matrix:
 
 	def addTetromino(self): # set piece spawn location
 		self.tetrominos.nextTetromino()
+		self.current_tetromino = self.tetrominos.getCurrentTetromino()
+		self.mino_locations.clear()
+		self.mino_locations = self.spawnLocations[self.current_tetromino]
+
+		for i in self.mino_locations: 
+			if self.matrix[i[0],i[1]] != 0:
+				raise Exception("Topped out")
+
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+
+	def swapHold(self):
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = 0
+
+		self.tetrominos.swapHold()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
 		self.mino_locations.clear()
 		self.mino_locations = self.spawnLocations[self.current_tetromino]

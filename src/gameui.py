@@ -105,7 +105,26 @@ def drawQueue(length=5): # max queue length of 5
                     drawingSpace[row,col] = 0
 
 def drawHold():
-    pass
+    tetr = m.getHold()
+    if tetr != "":
+        drawingSpace = np.zeros((3,4),dtype=int)
+        tetr_mat = m.tetromino2matrix[tetr]
+        if tetr != 'I':
+            drawingSpace[0:tetr_mat.shape[0],1:tetr_mat.shape[1]+1] += tetr_mat
+        else:
+            drawingSpace[0:tetr_mat.shape[0],0:tetr_mat.shape[1]] += tetr_mat
+
+        for row in range(drawingSpace.shape[0]):
+            for col in range(drawingSpace.shape[1]):
+                if drawingSpace[row,col] != 0:
+                    pygame.draw.rect(
+                        screen,
+                        m.index2rgb[drawingSpace[row,col]],
+                        pygame.Rect((matrix_left_top[0]-offset+(col-4)*m.mino_dim,
+                                    matrix_left_top[1]+(row-2)*m.mino_dim),
+                                    (m.mino_dim,m.mino_dim))
+                    )
+                    drawingSpace[row,col] = 0
 
 def drawText():
     time_label.draw(screen)
@@ -134,6 +153,7 @@ def getScore(): # current score
 
 # for testing purposes only
 m.addTetromino()
+m.swapHold()
 print(m.matrix)
 starttick = pygame.time.get_ticks()
 
@@ -144,6 +164,7 @@ while 1:
     screen.fill(black)
     drawMatrix()
     drawQueue()
+    drawHold()
     drawText()
     pygame.display.flip()
 
