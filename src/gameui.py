@@ -24,9 +24,10 @@ white = 255, 255, 255
 grey = 128, 128, 128
 yellow = 255, 255, 0
 
+gravity = 1 # number of blocks per second at which the tetromino falls
+
 
 def drawMatrix(showGrid=True):
-
     pygame.draw.rect(screen,white,pygame.Rect(matrix_left_top,m.dim()))
 
     # draw piece spawn area:
@@ -38,6 +39,18 @@ def drawMatrix(showGrid=True):
                     m.index2rgb[m.matrix[i,j]],
                     pygame.Rect((matrix_left_top[0]+j*m.mino_dim,
                                 matrix_left_top[1]-(2-i)*m.mino_dim),
+                                (m.mino_dim,m.mino_dim))
+                )
+
+    # draw the actual matrix area:
+    for i in range(20):
+        for j in range(10):
+            if m.matrix[i+2,j]!=0:
+                pygame.draw.rect(
+                    screen,
+                    m.index2rgb[m.matrix[i+2,j]],
+                    pygame.Rect((matrix_left_top[0]+j*m.mino_dim,
+                                matrix_left_top[1]+i*m.mino_dim),
                                 (m.mino_dim,m.mino_dim))
                 )
 
@@ -54,6 +67,11 @@ def drawMatrix(showGrid=True):
                 (matrix_left_top[0]+m.width,matrix_left_top[1]+(i-1)*m.mino_dim)
             )
 
+def drawQueue():
+    pass
+
+def drawHold():
+    pass
         
 def drawTimer():
     time_passed = pygame.time.get_ticks()
@@ -75,13 +93,25 @@ def drawScore():
     text = font.render(str(m.getScore()), True, yellow)
     screen.blit(text,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+4*font_size))
 
+# for testing purposes only
 m.addTetromino()
 print(m.matrix)
+starttick = pygame.time.get_ticks()
+
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
+
     screen.fill(black)
     drawMatrix()
     drawTimer()
     drawScore()
     pygame.display.flip()
+
+    endtick = pygame.time.get_ticks()
+    if(endtick - starttick) >= 1000//gravity:
+        starttick = endtick
+        if(not m.enforceGravity()):
+            m.addTetromino()
+        print(m.matrix)
+

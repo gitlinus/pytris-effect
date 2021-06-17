@@ -3,7 +3,6 @@ import random
 class Tetromino:
 
 	# controls piece generation
-	tetromino2index = {'I':1,'J':2,'L':3,'O':4,'S':5,'T':6,'Z':7}
 	tetrominos = ['I','J','L','O','S','T','Z']
 
 	def __init__(self,bagged=True):
