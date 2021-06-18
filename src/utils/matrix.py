@@ -63,7 +63,7 @@ class Matrix:
 		self.tetrominos.nextTetromino()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
 		self.mino_locations.clear()
-		self.mino_locations = self.spawnLocations[self.current_tetromino]
+		self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
 
 		for i in self.mino_locations: 
 			if self.matrix[i[0],i[1]] != 0:
@@ -79,7 +79,7 @@ class Matrix:
 		self.tetrominos.swapHold()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
 		self.mino_locations.clear()
-		self.mino_locations = self.spawnLocations[self.current_tetromino]
+		self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
 
 		for i in self.mino_locations: 
 			if self.matrix[i[0],i[1]] != 0:
@@ -87,6 +87,77 @@ class Matrix:
 
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+
+	def hardDrop(self):
+		# find largest distance that all minos can shift down by
+		dist = 0 
+		found = False
+		for r in range(21): # at most drop by a distance of 20
+			for i in self.mino_locations:
+				if i[0]+r >= 22 or (self.matrix[i[0]+r,i[1]] != 0 and (i[0]+r,i[1]) not in self.mino_locations):
+					found = True
+					break
+			if found: break
+			else: dist = r
+		temp = []
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = 0
+			temp.append((i[0]+dist,i[1]))
+		for i in temp:
+			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+		self.addTetromino()
+
+	def rotateCW(self):
+		pass
+
+	def rotateCCW(self):
+		pass
+
+	def rotate180(self):
+		pass
+
+	def shiftLeft(self):
+		# check if shift is possible, then shift 1 mino left
+		for i in self.mino_locations:
+			if i[1]-1 < 0 or (self.matrix[i[0],i[1]-1] != 0 and (i[0],i[1]-1) not in self.mino_locations):
+				return False
+		temp = []
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = 0
+			temp.append((i[0],i[1]-1))
+		for i in temp:
+			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+		self.mino_locations = temp
+		return True
+
+	def shiftRight(self):
+		for i in self.mino_locations:
+			if i[1]+1 >= 10 or (self.matrix[i[0],i[1]+1] != 0 and (i[0],i[1]+1) not in self.mino_locations):
+				return False
+		temp = []
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = 0
+			temp.append((i[0],i[1]+1))
+		for i in temp:
+			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+		self.mino_locations = temp
+		return True
+
+	def softDrop(self): # should be basically the same as gravity
+		for i in self.mino_locations:
+			if i[0]+1 == 22 or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
+				return False
+		temp = []
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = 0
+			temp.append((i[0]+1,i[1]))
+		for i in temp:
+			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+		self.mino_locations = temp
+		return True
+
+	def freezeTetromino(self): # freezes tetromino at current position
+		pass
 
 	def enforceGravity(self):
 		"""
@@ -97,16 +168,14 @@ class Matrix:
 			if i[0]+1 == 22 or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				if i[0]==0 or i[0]==1:
 					raise Exception("Topped out")
+				else:
+					self.addTetromino()
 				return False
-
 		temp = []
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = 0
 			temp.append((i[0]+1,i[1]))
-
 		for i in temp:
 			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-
 		self.mino_locations = temp
-
 		return True

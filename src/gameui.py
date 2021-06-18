@@ -4,6 +4,7 @@ import pyautogui
 import time
 import numpy as np
 from .utils import matrix
+from .utils import config
 
 pygame.init()
 
@@ -26,6 +27,17 @@ grey = 128, 128, 128
 yellow = 255, 255, 0
 
 gravity = 1 # number of blocks per second at which the tetromino falls
+das = 120 # (delayed auto-shift) number of milleseconds before arr sets in
+arr = 50 # (auto repeat rate) number of milleseconds in between each time the tetromino is shifted
+soft_drop_speed = 2 # rate (minos per second) at which soft drop makes the tetromino fall
+das_direction = None
+left_das_tick = None
+right_das_tick = None
+left_arr_tick = None
+right_arr_tick = None
+soft_drop_tick = None
+shift_once = False
+cancel_das = True # leave true by default
 
 # text labels beside matrix
 class Label:
@@ -126,6 +138,9 @@ def drawHold():
                     )
                     drawingSpace[row,col] = 0
 
+def drawGhost(): # draws ghost piece
+    pass
+
 def drawText():
     time_label.draw(screen)
     Label(font,getTimer(),yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+font_size)).draw(screen)
@@ -151,15 +166,110 @@ def getTimer(): # time elapsed
 def getScore(): # current score
     return str(m.getScore())
 
+def getFixedInput(key_event, key_press): # for single actions (hard drop, rotations, swap hold)
+    global das_direction, left_das_tick, right_das_tick, left_arr_tick, right_arr_tick, soft_drop_tick
+
+    if key_event == pygame.KEYDOWN:
+        if key_press in config.key2action:
+            if config.key2action[key_press] == "HARD_DROP":
+                m.hardDrop()
+                print("HARD_DROP")
+            elif config.key2action[key_press] == "ROTATE_CW":
+                m.rotateCW()
+                print("ROTATE_CW")
+            elif config.key2action[key_press] == "ROTATE_CCW":
+                m.rotateCCW()
+                print("ROTATE_CCW")
+            elif config.key2action[key_press] == "ROTATE_180":
+                m.rotate180()
+                print("ROTATE_180")
+            elif config.key2action[key_press] == "SWAP_HOLD": #note: remember to implement way to stop swap_hold being executed consecutively
+                m.swapHold()
+                print("SWAP_HOLD")
+            elif config.key2action[key_press] == "SHIFT_LEFT":
+                print("SHIFT_LEFT")
+                das_direction = "LEFT"
+                if cancel_das:
+                    right_das_tick = None
+                    right_arr_tick = None
+                left_das_tick = pygame.time.get_ticks()
+            elif config.key2action[key_press] == "SHIFT_RIGHT":
+                print("SHIFT_RIGHT")
+                das_direction = "RIGHT"
+                if cancel_das:
+                    left_das_tick = None
+                    left_arr_tick = None
+                right_das_tick = pygame.time.get_ticks()
+            elif config.key2action[key_press] == "SOFT_DROP":
+                print("SOFT_DROP")
+                soft_drop_tick = pygame.time.get_ticks()
+
+    elif key_event == pygame.KEYUP: # reset das, arr, and soft drop
+        if key_press in config.key2action:
+            if config.key2action[key_press] == "SHIFT_LEFT":
+                left_das_tick = None
+                left_arr_tick = None
+            elif config.key2action[key_press] == "SHIFT_RIGHT":
+                right_das_tick = None
+                right_arr_tick = None
+            elif config.key2action[key_press] == "SOFT_DROP":
+                soft_drop_tick = None
+
+def getContinuousInput(): # for continuous actions (shift left, shift right, soft drop)
+    keys = pygame.key.get_pressed()
+
+    global das_direction, left_das_tick, left_arr_tick, right_das_tick, right_arr_tick, soft_drop_tick
+    current_tick = pygame.time.get_ticks()
+
+    if not keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]: # reset direction
+        das_direction = None
+
+    if left_das_tick == None and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]): # das was cancelled but key was held down still
+        left_das_tick = current_tick
+
+    if right_das_tick == None and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]): # das was cancelled but key was held down still
+        right_das_tick = current_tick
+
+    if das_direction == "LEFT" and left_das_tick != None: # das was already started
+        if current_tick - left_das_tick >= das and keys[config.action2key["SHIFT_LEFT"]]: # if pressed for das duration, set in arr
+            if left_arr_tick == None:    
+                left_arr_tick = current_tick
+            else: # set in arr
+                if current_tick - left_arr_tick >= arr:
+                    m.shiftLeft()
+                    left_arr_tick = current_tick
+        elif not shift_once: # das duration not met, only shift tetromino once
+            shift_once = True
+            m.shiftLeft()
+
+    elif das_direction == "RIGHT" and right_das_tick != None:
+        if current_tick - right_das_tick >= das and keys[config.action2key["SHIFT_RIGHT"]]:
+            if right_arr_tick == None:
+                right_arr_tick = current_tick
+            else: # set in arr
+                if current_tick - right_arr_tick >= arr:
+                    m.shiftRight()
+                    right_arr_tick = current_tick
+        elif not shift_once:
+            shift_once = True
+            m.shiftRight()
+
+    if soft_drop_tick != None and keys[config.action2key["SOFT_DROP"]]: # treat soft drop like faster gravity
+        if (current_tick - soft_drop_tick) >= 1000//soft_drop_speed:
+            m.softDrop()
+            soft_drop_tick = current_tick
+
 # for testing purposes only
 m.addTetromino()
-m.swapHold()
-print(m.matrix)
-starttick = pygame.time.get_ticks()
+# print(m.matrix)
+start_tick = pygame.time.get_ticks()
 
 while 1:
     for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
+        if event.type == pygame.QUIT: 
+            sys.exit()
+        elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+            getFixedInput(event.type, event.key)
 
     screen.fill(black)
     drawMatrix()
@@ -168,10 +278,9 @@ while 1:
     drawText()
     pygame.display.flip()
 
-    endtick = pygame.time.get_ticks()
-    if(endtick - starttick) >= 1000//gravity:
-        starttick = endtick
-        if(not m.enforceGravity()):
-            m.addTetromino()
-        print(m.matrix)
+    end_tick = pygame.time.get_ticks()
+    if(end_tick - start_tick) >= 1000//gravity:
+        start_tick = end_tick
+        m.enforceGravity()
+        # print(m.matrix)
 
