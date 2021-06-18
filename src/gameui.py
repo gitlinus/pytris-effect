@@ -167,7 +167,7 @@ def getScore(): # current score
     return str(m.getScore())
 
 def getFixedInput(key_event, key_press): # for single actions (hard drop, rotations, swap hold)
-    global das_direction, left_das_tick, right_das_tick, left_arr_tick, right_arr_tick, soft_drop_tick
+    global das_direction, left_das_tick, right_das_tick, left_arr_tick, right_arr_tick, soft_drop_tick, shift_once
 
     if key_event == pygame.KEYDOWN:
         if key_press in config.key2action:
@@ -220,7 +220,7 @@ def getFixedInput(key_event, key_press): # for single actions (hard drop, rotati
 def getContinuousInput(): # for continuous actions (shift left, shift right, soft drop)
     keys = pygame.key.get_pressed()
 
-    global das_direction, left_das_tick, left_arr_tick, right_das_tick, right_arr_tick, soft_drop_tick
+    global das_direction, left_das_tick, left_arr_tick, right_das_tick, right_arr_tick, soft_drop_tick, shift_once
     current_tick = pygame.time.get_ticks()
 
     if not keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]: # reset direction
@@ -275,6 +275,7 @@ while 1:
         elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
             getFixedInput(event.type, event.key)
 
+    getContinuousInput()
     screen.fill(black)
     drawMatrix()
     drawQueue()
