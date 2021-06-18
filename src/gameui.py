@@ -188,6 +188,7 @@ def getFixedInput(key_event, key_press): # for single actions (hard drop, rotati
                 print("SWAP_HOLD")
             elif config.key2action[key_press] == "SHIFT_LEFT":
                 print("SHIFT_LEFT")
+                shift_once = True
                 das_direction = "LEFT"
                 if cancel_das:
                     right_das_tick = None
@@ -195,6 +196,7 @@ def getFixedInput(key_event, key_press): # for single actions (hard drop, rotati
                 left_das_tick = pygame.time.get_ticks()
             elif config.key2action[key_press] == "SHIFT_RIGHT":
                 print("SHIFT_RIGHT")
+                shift_once = True
                 das_direction = "RIGHT"
                 if cancel_das:
                     left_das_tick = None
@@ -226,9 +228,11 @@ def getContinuousInput(): # for continuous actions (shift left, shift right, sof
 
     if left_das_tick == None and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]): # das was cancelled but key was held down still
         left_das_tick = current_tick
+        das_direction = "LEFT"
 
     if right_das_tick == None and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]): # das was cancelled but key was held down still
         right_das_tick = current_tick
+        das_direction = "RIGHT"
 
     if das_direction == "LEFT" and left_das_tick != None: # das was already started
         if current_tick - left_das_tick >= das and keys[config.action2key["SHIFT_LEFT"]]: # if pressed for das duration, set in arr
@@ -238,8 +242,8 @@ def getContinuousInput(): # for continuous actions (shift left, shift right, sof
                 if current_tick - left_arr_tick >= arr:
                     m.shiftLeft()
                     left_arr_tick = current_tick
-        elif not shift_once: # das duration not met, only shift tetromino once
-            shift_once = True
+        elif shift_once: # das duration not met, only shift tetromino once
+            shift_once = False
             m.shiftLeft()
 
     elif das_direction == "RIGHT" and right_das_tick != None:
@@ -250,8 +254,8 @@ def getContinuousInput(): # for continuous actions (shift left, shift right, sof
                 if current_tick - right_arr_tick >= arr:
                     m.shiftRight()
                     right_arr_tick = current_tick
-        elif not shift_once:
-            shift_once = True
+        elif shift_once:
+            shift_once = False
             m.shiftRight()
 
     if soft_drop_tick != None and keys[config.action2key["SOFT_DROP"]]: # treat soft drop like faster gravity

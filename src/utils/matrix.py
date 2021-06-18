@@ -43,6 +43,7 @@ class Matrix:
 		self.tetrominos = tetromino.Tetromino()
 		self.current_tetromino = ""
 		self.mino_locations = []
+		self.hold_available = False
 
 	def dim(self):
 		return self.width, self.height
@@ -72,7 +73,12 @@ class Matrix:
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
 
+		self.hold_available = True # make hold available again
+
 	def swapHold(self):
+		if not self.hold_available: # check if hold is available first
+			return False
+
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = 0
 
@@ -87,6 +93,9 @@ class Matrix:
 
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+
+		self.hold_available = False
+		return True
 
 	def hardDrop(self):
 		# find largest distance that all minos can shift down by
@@ -179,3 +188,6 @@ class Matrix:
 			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
 		self.mino_locations = temp
 		return True
+
+	def clearLines(self): # clears filled lines
+		pass
