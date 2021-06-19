@@ -190,18 +190,24 @@ def getFixedInput(key_event, key_press): # for single actions (hard drop, rotati
                 print("SHIFT_LEFT")
                 shift_once = True
                 das_direction = "LEFT"
+                left_das_tick = pygame.time.get_ticks()
+                right_arr_tick = None
                 if cancel_das:
                     right_das_tick = None
-                    right_arr_tick = None
-                left_das_tick = pygame.time.get_ticks()
+                else:
+                    if right_das_tick != None:
+                        left_das_tick = right_das_tick
             elif config.key2action[key_press] == "SHIFT_RIGHT":
                 print("SHIFT_RIGHT")
                 shift_once = True
                 das_direction = "RIGHT"
+                right_das_tick = pygame.time.get_ticks()
+                left_arr_tick = None
                 if cancel_das:
                     left_das_tick = None
-                    left_arr_tick = None
-                right_das_tick = pygame.time.get_ticks()
+                else:
+                    if left_das_tick != None:
+                        right_das_tick = left_das_tick
             elif config.key2action[key_press] == "SOFT_DROP":
                 print("SOFT_DROP")
                 soft_drop_tick = pygame.time.get_ticks()
@@ -226,13 +232,18 @@ def getContinuousInput(): # for continuous actions (shift left, shift right, sof
     if not keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]: # reset direction
         das_direction = None
 
-    if left_das_tick == None and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]): # das was cancelled but key was held down still
-        left_das_tick = current_tick
-        das_direction = "LEFT"
-
-    if right_das_tick == None and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]): # das was cancelled but key was held down still
-        right_das_tick = current_tick
-        das_direction = "RIGHT"
+    if cancel_das:
+        if left_das_tick == None and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]): # das was cancelled but key was held down still
+            left_das_tick = current_tick
+            das_direction = "LEFT"
+        if right_das_tick == None and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]): # das was cancelled but key was held down still
+            right_das_tick = current_tick
+            das_direction = "RIGHT"
+    else:
+        if das_direction == "RIGHT" and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]): # direction changed but no das cancellation
+            das_direction = "LEFT"
+        if das_direction == "LEFT" and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]): # direction changed but no das cancellation
+            das_direction = "RIGHT"
 
     if das_direction == "LEFT" and left_das_tick != None: # das was already started
         if current_tick - left_das_tick >= das and keys[config.action2key["SHIFT_LEFT"]]: # if pressed for das duration, set in arr
