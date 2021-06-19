@@ -120,7 +120,7 @@ class Matrix:
 		found = False
 		for r in range(21): # at most drop by a distance of 20
 			for i in self.mino_locations:
-				if i[0]+r >= 22 or (self.matrix[i[0]+r,i[1]] != 0 and (i[0]+r,i[1]) not in self.mino_locations):
+				if i[0]+r >= self.matrix.shape[0] or (self.matrix[i[0]+r,i[1]] != 0 and (i[0]+r,i[1]) not in self.mino_locations):
 					found = True
 					break
 			if found: break
@@ -147,14 +147,14 @@ class Matrix:
 
 	def shiftRight(self):
 		for i in self.mino_locations:
-			if i[1]+1 >= 10 or (self.matrix[i[0],i[1]+1] != 0 and (i[0],i[1]+1) not in self.mino_locations):
+			if i[1]+1 >= self.matrix.shape[1] or (self.matrix[i[0],i[1]+1] != 0 and (i[0],i[1]+1) not in self.mino_locations):
 				return False
 		self.translateTetromino(0,1)
 		return True
 
 	def softDrop(self): # should be basically the same as gravity
 		for i in self.mino_locations:
-			if i[0]+1 == 22 or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
+			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				return False
 		self.translateTetromino(1,0)
 		return True
@@ -168,7 +168,7 @@ class Matrix:
 		clear old locations, store new locations
 		"""
 		for i in self.mino_locations:
-			if i[0]+1 == 22 or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
+			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				if i[0]==0 or i[0]==1:
 					raise Exception("Topped out")
 				else:
