@@ -1,5 +1,6 @@
 import numpy as np 
 from . import tetromino
+from . import rotations
 
 class Matrix:
 	# colour and index assignment
@@ -114,7 +115,6 @@ class Matrix:
 		return True
 
 	def hardDrop(self):
-		self.removeTetromino()
 		# find largest distance that all minos can shift down by
 		dist = 0 
 		found = False
@@ -129,13 +129,19 @@ class Matrix:
 		self.addTetromino()
 
 	def rotateCW(self):
-		pass
-
+		self.removeTetromino()
+		self.mino_locations, self.tetromino_orientation = rotations.rotateCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.placeTetromino()
+		
 	def rotateCCW(self):
-		pass
+		self.removeTetromino()
+		self.mino_locations, self.tetromino_orientation = rotations.rotateCCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.placeTetromino()
 
 	def rotate180(self):
-		pass
+		self.removeTetromino()
+		self.mino_locations, self.tetromino_orientation = rotations.rotate180(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.placeTetromino()
 
 	def shiftLeft(self):
 		# check if shift is possible, then shift 1 mino left

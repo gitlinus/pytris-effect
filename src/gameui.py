@@ -297,6 +297,6 @@ while 1:
     end_tick = pygame.time.get_ticks()
     if(end_tick - start_tick) >= 1000//gravity:
         start_tick = end_tick
-        m.enforceGravity()
-        # print(m.matrix)
+        # m.enforceGravity()
+        print(m.matrix)
 

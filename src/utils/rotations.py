@@ -39,7 +39,7 @@ rotationStates = {
 					[0,0,0]],dtype=int)]
 }
 
-kickTable = { # kick values in (x,y) -> (col, row)
+kickTable = { # kick values in (x,y) -> (col, -row)
 	'I':{
 		"0>>1":[(0,0),(-2,0),(1,0),(-2,-1),(1,2)],
 		"0>>2":[(0,0)],
@@ -166,55 +166,65 @@ def getRelativeOrigin(tetromino, mino_locations, orientation):
 
 def validPosition(matrix, mino_locations):
 	for i in mino_locations:
-		if matrix[i[0],i[1]] != 0 and (i[0],i[1]) not in mino_locations:
+		if i[0] < 0 or i[0] >= matrix.shape[0] or i[1] < 0 or i[1] >= matrix.shape[1]: # check within board
+			return False
+		elif matrix[i[0],i[1]] != 0: # check for other blocks
 			return False
 	return True
 
 def getKicks(matrix, tetromino, mino_locations, state_begin, state_end):
 	kicks = kickTable[tetromino][str(state_begin)+">>"+str(state_end)]
 	for kick in kicks:
-		for pos in mino_locations:
-			mino_locations.append((pos[0]+kick[1],pos[1]+kick[0]))
+		candidates = mino_locations.copy()
 		for i in range(4):
-			mino_locations.pop(0)
-		if validPosition(matrix,mino_locations):
-			return True
-	return False
+			pos = candidates[i]
+			candidates.append((pos[0]-kick[1],pos[1]+kick[0])) # kick: (x,y) -> (col,-row)
+		for i in range(4):
+			candidates.pop(0)
+		if validPosition(matrix,candidates):
+			return True, candidates
+	return False, None
 
 def rotateCW(matrix, tetromino, mino_locations, orientation):
 	candidates = mino_locations.copy()
 	origin = getRelativeOrigin(tetromino,candidates,orientation)
 	for i in range(4):
-		res = translate(rot90cw(translate(candidates,-origin[0],-origin[1])),origin[0],origin[1])
+		res = translate(rot90cw(translate(candidates[i],-origin[0],-origin[1])),origin[0],origin[1])
 		candidates.append((int(res[0]),int(res[1])))
 	for i in range(4):
 		candidates.pop(0)
-	if getKicks(matrix, candidates, orientation, (orientation+1)%4):
+	status, candidates = getKicks(matrix, tetromino, candidates, orientation, (orientation+1)%4)
+	if status:
 		orientation += 1
 		orientation %= 4
 		mino_locations = candidates
-	return orientation
+	print("STATUS CW: ")
+	print(status)
+	return mino_locations, orientation
 
 def rotateCCW(matrix, tetromino, mino_locations, orientation):
 	candidates = mino_locations.copy()
 	origin = getRelativeOrigin(tetromino,candidates,orientation)
 	for i in range(4):
-		res = translate(rot90ccw(translate(candidates,-origin[0],-origin[1])),origin[0],origin[1])
+		res = translate(rot90ccw(translate(candidates[i],-origin[0],-origin[1])),origin[0],origin[1])
 		candidates.append((int(res[0]),int(res[1])))
 	for i in range(4):
 		candidates.pop(0)
-	if getKicks(matrix, candidates, orientation, (orientation-1)%4):
+	status, candidates = getKicks(matrix, tetromino, candidates, orientation, (orientation-1)%4)
+	if status:
 		orientation -= 1
 		orientation %= 4
 		mino_locations = candidates
-	return orientation
+	print("STATUS CCW: ")
+	print(status)
+	return mino_locations, orientation
 
 def rotate180(matrix, tetromino, mino_locations, orientation):
 	candidates = mino_locations.copy()
 	for i in range(2): # do 2 cw rotations
 		origin = getRelativeOrigin(tetromino,candidates,orientation+i)
 		for i in range(4):
-			res = translate(rot90cw(translate(candidates,-origin[0],-origin[1])),origin[0],origin[1])
+			res = translate(rot90cw(translate(candidates[i],-origin[0],-origin[1])),origin[0],origin[1])
 			candidates.append((int(res[0]),int(res[1])))
 		for i in range(4):
 			candidates.pop(0)
@@ -222,6 +232,6 @@ def rotate180(matrix, tetromino, mino_locations, orientation):
 		orientation += 2
 		orientation %= 4
 		mino_locations = candidates
-	return orientation
+	return mino_locations, orientation
 
 genOrientations()
