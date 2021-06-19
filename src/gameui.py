@@ -39,6 +39,8 @@ soft_drop_tick = None
 shift_once = False
 cancel_das = True # leave true by default
 
+ghostPiece = True
+
 # text labels beside matrix
 class Label:
     def __init__(self, font, text, colour, position, anchor="topleft"):
@@ -53,7 +55,7 @@ time_label = Label(font,"TIME",yellow,(matrix_left_top[0]+m.width+offset,matrix_
 score_label = Label(font,"SCORE",yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+3*font_size))
 lines_label = Label(font,"LINES",yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+2*m.height//3),"topright")
 
-def drawMatrix(showGrid=True):
+def drawMatrix():
     pygame.draw.rect(screen,white,pygame.Rect(matrix_left_top,m.dim()))
 
     # draw piece spawn area:
@@ -79,19 +81,6 @@ def drawMatrix(showGrid=True):
                                 matrix_left_top[1]+i*m.mino_dim),
                                 (m.mino_dim,m.mino_dim))
                 )
-
-    # draw grid
-    if showGrid:
-        for i in range(11): #vertical lines
-            pygame.draw.line(screen,grey,
-                (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]-2*m.mino_dim),
-                (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]+m.height)
-            )
-        for i in range(22): #horizontal lines
-            pygame.draw.line(screen,grey,
-                (matrix_left_top[0],matrix_left_top[1]+(i-1)*m.mino_dim),
-                (matrix_left_top[0]+m.width,matrix_left_top[1]+(i-1)*m.mino_dim)
-            )
 
 def drawQueue(length=5): # max queue length of 5
     if(length>5): 
@@ -139,7 +128,38 @@ def drawHold():
                     drawingSpace[row,col] = 0
 
 def drawGhost(): # draws ghost piece
-    pass
+    if ghostPiece:
+        dist = 0 
+        found = False
+        for r in range(21): # at most drop by a distance of 20
+            for i in m.mino_locations:
+                if i[0]+r >= m.matrix.shape[0] or (m.matrix[i[0]+r,i[1]] != 0 and (i[0]+r,i[1]) not in m.mino_locations):
+                    found = True
+                    break
+            if found: break
+            else: dist = r
+        for pos in m.mino_locations: # draw ghost piece darker then actual piece colour
+            if (dist+pos[0],pos[1]) not in m.mino_locations: # don't cover actual piece
+                pygame.draw.rect(
+                        screen,
+                        (lambda a: (a[0]//3, a[1]//3, a[2]//3))(m.tetromino2rgb[m.current_tetromino]),
+                        pygame.Rect((matrix_left_top[0]+pos[1]*m.mino_dim,
+                                    matrix_left_top[1]+(dist+pos[0]-2)*m.mino_dim),
+                                    (m.mino_dim,m.mino_dim))
+                    )
+def drawGrid(showGrid=True):
+# draw grid
+    if showGrid:
+        for i in range(11): #vertical lines
+            pygame.draw.line(screen,grey,
+                (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]-2*m.mino_dim),
+                (matrix_left_top[0]+i*m.mino_dim,matrix_left_top[1]+m.height)
+            )
+        for i in range(22): #horizontal lines
+            pygame.draw.line(screen,grey,
+                (matrix_left_top[0],matrix_left_top[1]+(i-1)*m.mino_dim),
+                (matrix_left_top[0]+m.width,matrix_left_top[1]+(i-1)*m.mino_dim)
+            )
 
 def drawText():
     time_label.draw(screen)
@@ -289,6 +309,8 @@ while 1:
     getContinuousInput()
     screen.fill(black)
     drawMatrix()
+    drawGhost()
+    drawGrid()
     drawQueue()
     drawHold()
     drawText()
