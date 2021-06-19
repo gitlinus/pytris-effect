@@ -43,6 +43,7 @@ class Matrix:
 		self.tetrominos = tetromino.Tetromino()
 		self.current_tetromino = ""
 		self.mino_locations = []
+		self.tetromino_orientation = 0 # keeps track of orientation of current tetromino (0 to 3)
 		self.hold_available = False
 		self.placed_tetromino = False # keeps track whether tetromino was placed into matrix yet
 
@@ -83,6 +84,7 @@ class Matrix:
 		self.clearLines() # clear any filled lines before adding next tetromino
 		self.tetrominos.nextTetromino()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
+		self.tetromino_orientation = 0
 		self.mino_locations.clear()
 		self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
 
