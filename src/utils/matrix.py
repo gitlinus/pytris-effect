@@ -44,6 +44,7 @@ class Matrix:
 		self.current_tetromino = ""
 		self.mino_locations = []
 		self.hold_available = False
+		self.placed_tetromino = False # keeps track whether tetromino was placed into matrix yet
 
 	def dim(self):
 		return self.width, self.height
@@ -60,7 +61,26 @@ class Matrix:
 	def getLines(self):
 		return self.lines_cleared
 
+	def removeTetromino(self): # removes current tetromino from matrix
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = 0
+		self.placed_tetromino = False
+
+	def placeTetromino(self): # emplaces current tetromino into matrix
+		for i in self.mino_locations:
+			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+		self.placed_tetromino = True
+
+	def translateTetromino(self, drow, dcol): # translate current tetromino by drow and dcol
+		temp = []
+		self.removeTetromino()
+		for i in self.mino_locations:
+			temp.append((i[0]+drow,i[1]+dcol))
+		self.mino_locations = temp
+		self.placeTetromino()
+
 	def addTetromino(self): # set piece spawn location
+		self.clearLines() # clear any filled lines before adding next tetromino
 		self.tetrominos.nextTetromino()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
 		self.mino_locations.clear()
@@ -70,18 +90,14 @@ class Matrix:
 			if self.matrix[i[0],i[1]] != 0:
 				raise Exception("Topped out")
 
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-
+		self.placeTetromino()
 		self.hold_available = True # make hold available again
 
 	def swapHold(self):
 		if not self.hold_available: # check if hold is available first
 			return False
 
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = 0
-
+		self.removeTetromino()
 		self.tetrominos.swapHold()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
 		self.mino_locations.clear()
@@ -91,13 +107,12 @@ class Matrix:
 			if self.matrix[i[0],i[1]] != 0:
 				raise Exception("Topped out")
 
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-
+		self.placeTetromino()
 		self.hold_available = False
 		return True
 
 	def hardDrop(self):
+		self.removeTetromino()
 		# find largest distance that all minos can shift down by
 		dist = 0 
 		found = False
@@ -108,12 +123,7 @@ class Matrix:
 					break
 			if found: break
 			else: dist = r
-		temp = []
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = 0
-			temp.append((i[0]+dist,i[1]))
-		for i in temp:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+		self.translateTetromino(dist,0)
 		self.addTetromino()
 
 	def rotateCW(self):
@@ -130,39 +140,21 @@ class Matrix:
 		for i in self.mino_locations:
 			if i[1]-1 < 0 or (self.matrix[i[0],i[1]-1] != 0 and (i[0],i[1]-1) not in self.mino_locations):
 				return False
-		temp = []
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = 0
-			temp.append((i[0],i[1]-1))
-		for i in temp:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-		self.mino_locations = temp
+		self.translateTetromino(0,-1)
 		return True
 
 	def shiftRight(self):
 		for i in self.mino_locations:
 			if i[1]+1 >= 10 or (self.matrix[i[0],i[1]+1] != 0 and (i[0],i[1]+1) not in self.mino_locations):
 				return False
-		temp = []
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = 0
-			temp.append((i[0],i[1]+1))
-		for i in temp:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-		self.mino_locations = temp
+		self.translateTetromino(0,1)
 		return True
 
 	def softDrop(self): # should be basically the same as gravity
 		for i in self.mino_locations:
 			if i[0]+1 == 22 or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				return False
-		temp = []
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = 0
-			temp.append((i[0]+1,i[1]))
-		for i in temp:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-		self.mino_locations = temp
+		self.translateTetromino(1,0)
 		return True
 
 	def freezeTetromino(self): # freezes tetromino at current position
@@ -180,14 +172,20 @@ class Matrix:
 				else:
 					self.addTetromino()
 				return False
-		temp = []
-		for i in self.mino_locations:
-			self.matrix[i[0],i[1]] = 0
-			temp.append((i[0]+1,i[1]))
-		for i in temp:
-			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
-		self.mino_locations = temp
+		self.translateTetromino(1,0)
 		return True
 
-	def clearLines(self): # clears filled lines
-		pass
+	def clearLines(self): # clears filled lines, adapted from tetris-bot/board.py
+		# remove current tetromino from board, clear lines, put current tetromino back
+		res, cnt = [], 0 # resultant matrix, number of lines cleared
+		for i in range(self.matrix.shape[0]):
+			if not np.all((self.matrix[i] > 0)): 
+				res.append(self.matrix[i][:])
+			else:
+				cnt += 1
+		while len(res) < self.matrix.shape[0]:
+			res.insert(0,np.zeros(self.matrix.shape[1]))
+		self.matrix = np.asarray(res,dtype=int)
+		self.lines_cleared += cnt
+		return cnt > 0
+		
