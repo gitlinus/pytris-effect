@@ -118,7 +118,7 @@ class Matrix:
 		# find largest distance that all minos can shift down by
 		dist = 0 
 		found = False
-		for r in range(21): # at most drop by a distance of 20
+		for r in range(self.matrix.shape[0]-1): # range(21) at most drop by a distance of 20
 			for i in self.mino_locations:
 				if i[0]+r >= self.matrix.shape[0] or (self.matrix[i[0]+r,i[1]] != 0 and (i[0]+r,i[1]) not in self.mino_locations):
 					found = True
@@ -165,8 +165,16 @@ class Matrix:
 		self.translateTetromino(1,0)
 		return True
 
+	def touchedStack(self): # checks whether tetromino has touched the matrix stack
+		for i in self.mino_locations:
+			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
+				return True
+		return False
+
 	def freezeTetromino(self): # freezes tetromino at current position
-		pass
+		while(self.enforceGravity()):
+			pass
+		self.addTetromino()
 
 	def enforceGravity(self):
 		"""
@@ -177,8 +185,6 @@ class Matrix:
 			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				if i[0]==0 or i[0]==1:
 					raise Exception("Topped out")
-				else:
-					self.addTetromino()
 				return False
 		self.translateTetromino(1,0)
 		return True
@@ -196,4 +202,15 @@ class Matrix:
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
 		return cnt > 0
+
+	def resetMatrix(self,clear_lines=True,clear_score=True):
+		temp1 = 0
+		temp2 = 0
+		if not clear_lines:
+			temp1 = self.lines_cleared
+		if not clear_score:
+			temp2 = self.score
+		self.__init__()
+		self.lines_cleared = temp1
+		self.score = temp2
 		

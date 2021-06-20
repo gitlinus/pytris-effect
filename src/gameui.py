@@ -41,6 +41,9 @@ cancel_das = True # leave true by default
 
 ghostPiece = True
 
+move_reset = 15 # the maximum number of moves the player can make after the tetromino touches the stack
+lock_delay = 500 # number of milleseconds after the tetromino touches the stack before it is locked in place
+
 # text labels beside matrix
 class Label:
     def __init__(self, font, text, colour, position, anchor="topleft"):
@@ -231,6 +234,10 @@ def getFixedInput(key_event, key_press): # for single actions (hard drop, rotati
             elif config.key2action[key_press] == "SOFT_DROP":
                 print("SOFT_DROP")
                 soft_drop_tick = pygame.time.get_ticks()
+            elif config.key2action[key_press] == "RESET":
+                print("RESET")
+                m.resetMatrix()
+                m.addTetromino()
 
     elif key_event == pygame.KEYUP: # reset das, arr, and soft drop
         if key_press in config.key2action:
@@ -320,5 +327,5 @@ while 1:
     if(end_tick - start_tick) >= 1000//gravity:
         start_tick = end_tick
         # m.enforceGravity()
-        print(m.matrix)
+        # print(m.matrix)
 
