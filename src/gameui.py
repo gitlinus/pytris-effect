@@ -41,8 +41,13 @@ cancel_das = True # leave true by default
 
 ghostPiece = True
 
+enforce_auto_lock = True # turns on auto locking of pieces when they touch the stack if True
 move_reset = 15 # the maximum number of moves the player can make after the tetromino touches the stack
-lock_delay = 500 # number of milleseconds after the tetromino touches the stack before it is locked in place
+lock_delay = 500 # maximum of milleseconds in between moves after the tetromino touches the stack before it is locked in place
+prev_move_tick = None
+move_cnt = 0
+visited = np.zeros((m.matrix.shape[0],m.matrix.shape[1]),dtype=int)
+enforce_lock_delay = False
 
 # text labels beside matrix
 class Label:
@@ -197,18 +202,23 @@ def getFixedInput(key_event, key_press): # for single actions (hard drop, rotati
             if config.key2action[key_press] == "HARD_DROP":
                 m.hardDrop()
                 print("HARD_DROP")
+                getMoveStatus(True)
             elif config.key2action[key_press] == "ROTATE_CW":
                 m.rotateCW()
                 print("ROTATE_CW")
+                getMoveStatus(tick=pygame.time.get_ticks())
             elif config.key2action[key_press] == "ROTATE_CCW":
                 m.rotateCCW()
                 print("ROTATE_CCW")
+                getMoveStatus(tick=pygame.time.get_ticks())
             elif config.key2action[key_press] == "ROTATE_180":
                 m.rotate180()
                 print("ROTATE_180")
+                getMoveStatus(tick=pygame.time.get_ticks())
             elif config.key2action[key_press] == "SWAP_HOLD": #note: remember to implement way to stop swap_hold being executed consecutively
                 m.swapHold()
                 print("SWAP_HOLD")
+                getMoveStatus(True)
             elif config.key2action[key_press] == "SHIFT_LEFT":
                 print("SHIFT_LEFT")
                 shift_once = True
@@ -280,9 +290,11 @@ def getContinuousInput(): # for continuous actions (shift left, shift right, sof
                 if current_tick - left_arr_tick >= arr:
                     m.shiftLeft()
                     left_arr_tick = current_tick
+                    getMoveStatus(tick=current_tick)
         elif shift_once: # das duration not met, only shift tetromino once
             shift_once = False
             m.shiftLeft()
+            getMoveStatus(tick=current_tick)
 
     elif das_direction == "RIGHT" and right_das_tick != None:
         if current_tick - right_das_tick >= das and keys[config.action2key["SHIFT_RIGHT"]]:
@@ -292,14 +304,68 @@ def getContinuousInput(): # for continuous actions (shift left, shift right, sof
                 if current_tick - right_arr_tick >= arr:
                     m.shiftRight()
                     right_arr_tick = current_tick
+                    getMoveStatus(tick=current_tick)
         elif shift_once:
             shift_once = False
             m.shiftRight()
+            getMoveStatus(tick=current_tick)
 
     if soft_drop_tick != None and keys[config.action2key["SOFT_DROP"]]: # treat soft drop like faster gravity
         if (current_tick - soft_drop_tick) >= 1000//soft_drop_speed:
             m.softDrop()
             soft_drop_tick = current_tick
+            getMoveStatus(tick=current_tick)
+
+def getMoveStatus(reset=False,tick=None):
+    global enforce_auto_lock, prev_move_tick, enforce_lock_delay, move_cnt, visited
+    if enforce_auto_lock:
+        if reset:
+            visited.fill(0) # reset visited array
+            prev_move_tick = None
+            enforce_lock_delay = False
+            move_cnt = 0
+        else:
+            prev_move_tick = tick
+            move_cnt += 1 if enforce_lock_delay else 0
+
+def updateVisited():
+    global visited
+    for i in m.mino_locations:
+        visited[i[0],i[1]] = 1
+
+def alreadyVisited():
+    global visited
+    for i in m.mino_locations:
+        if not visited[i[0],i[1]]: 
+            return False
+    return True
+
+def enforceAutoLock():
+    """
+        if touchedStack 
+            get current tick and tick of last move
+            if lock delay reached -> freeze tetromino
+            else
+                if location not visited -> reset move counter
+                else -> turn on enforce_lock_delay
+                    if move_reset equals move counter -> freeze tetromino
+    """
+    global enforce_auto_lock, prev_move_tick, lock_delay, enforce_lock_delay, move_cnt, move_reset, visited
+    current_tick = pygame.time.get_ticks()
+    if enforce_auto_lock and m.touchedStack() and prev_move_tick != None:
+        if current_tick - prev_move_tick >= lock_delay:
+            m.freezeTetromino()
+            getMoveStatus(True)
+        else:
+            if not alreadyVisited():
+                move_cnt = 0
+                enforce_lock_delay = False
+                updateVisited()
+            else:
+                enforce_lock_delay = True
+                if move_cnt >= move_reset:
+                    m.freezeTetromino()
+                    getMoveStatus(True)
 
 # for testing purposes only
 m.addTetromino()
@@ -314,6 +380,7 @@ while 1:
             getFixedInput(event.type, event.key)
 
     getContinuousInput()
+    enforceAutoLock()
     screen.fill(black)
     drawMatrix()
     drawGhost()
@@ -326,6 +393,7 @@ while 1:
     end_tick = pygame.time.get_ticks()
     if(end_tick - start_tick) >= 1000//gravity:
         start_tick = end_tick
-        # m.enforceGravity()
+        m.enforceGravity()
+        getMoveStatus(tick=end_tick)
         # print(m.matrix)
 
