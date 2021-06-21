@@ -71,6 +71,11 @@ class Matrix:
 	def getLines(self):
 		return self.lines_cleared
 
+	def appendPrevMoves(self, action, dist):
+		self.prev2moves.append((action,dist))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
+
 	def removeTetromino(self): # removes current tetromino from matrix
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = 0
@@ -88,9 +93,7 @@ class Matrix:
 			temp.append((i[0]+drow,i[1]+dcol))
 		self.mino_locations = temp
 		self.placeTetromino()
-		self.prev2moves.append(("TRANSLATION",abs(drow)+abs(dcol)))
-		if len(self.prev2moves) > 2:
-			self.prev2moves.pop(0)
+		self.appendPrevMoves("TRANSLATION",abs(drow)+abs(dcol))
 
 	def addTetromino(self): # set piece spawn location
 		# scoring
@@ -119,9 +122,7 @@ class Matrix:
 		if not self.hold_available: # check if hold is available first
 			return False
 
-		self.prev2moves.append(("SWAPHOLD",None))
-		if len(self.prev2moves) > 2:
-			self.prev2moves.pop(0)
+		self.appendPrevMoves("SWAPHOLD",None)
 
 		self.removeTetromino()
 		self.tetrominos.swapHold()
@@ -154,25 +155,19 @@ class Matrix:
 	def rotateCW(self):
 		self.removeTetromino()
 		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotateCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
-		self.prev2moves.append(("ROTATION",kick_dist))
-		if len(self.prev2moves) > 2:
-			self.prev2moves.pop(0)
+		self.appendPrevMoves("ROTATION",kick_dist)
 		self.placeTetromino()
 		
 	def rotateCCW(self):
 		self.removeTetromino()
 		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotateCCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
-		self.prev2moves.append(("ROTATION",kick_dist))
-		if len(self.prev2moves) > 2:
-			self.prev2moves.pop(0)
+		self.appendPrevMoves("ROTATION",kick_dist)
 		self.placeTetromino()
 
 	def rotate180(self):
 		self.removeTetromino()
 		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotate180(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
-		self.prev2moves.append(("ROTATION",kick_dist))
-		if len(self.prev2moves) > 2:
-			self.prev2moves.pop(0)
+		self.appendPrevMoves("ROTATION",kick_dist)
 		self.placeTetromino()
 
 	def shiftLeft(self):
@@ -206,9 +201,7 @@ class Matrix:
 	def freezeTetromino(self): # freezes tetromino at current position
 		while(self.enforceGravity()):
 			pass
-		self.prev2moves.append(("AUTOLOCK",None))
-		if len(self.prev2moves) > 2:
-			self.prev2moves.pop(0)
+		self.appendPrevMoves("AUTOLOCK",None)
 		self.addTetromino()
 
 	def enforceGravity(self):
