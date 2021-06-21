@@ -1,6 +1,7 @@
 import numpy as np 
 from . import tetromino
 from . import rotations
+from . import scoring
 
 class Matrix:
 	# colour and index assignment
@@ -39,6 +40,7 @@ class Matrix:
 		self.width = mino_dim * 10 # dimensions in number of pixels (only used for GUI)
 		self.height = mino_dim * 20 # dimensions in number of pixels (only used for GUI)
 		self.matrix = np.zeros((22,10),dtype=int)
+		self.level = None
 		self.score = 0
 		self.lines_cleared = 0
 		self.tetrominos = tetromino.Tetromino()
@@ -47,8 +49,12 @@ class Matrix:
 		self.tetromino_orientation = 0 # keeps track of orientation of current tetromino (0 to 3)
 		self.hold_available = False
 		self.placed_tetromino = False # keeps track whether tetromino was placed into matrix yet
-		self.current_zone = None
-		self.full_zone = None
+		self.current_zone = 0
+		self.full_zone = 40
+		self.combo = 0
+		self.b2b = False
+		self.prev2moves = []
+		self.prev_clear_text = []
 
 	def dim(self):
 		return self.width, self.height
@@ -82,8 +88,18 @@ class Matrix:
 			temp.append((i[0]+drow,i[1]+dcol))
 		self.mino_locations = temp
 		self.placeTetromino()
+		self.prev2moves.append(("TRANSLATION",abs(drow)+abs(dcol)))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
 
 	def addTetromino(self): # set piece spawn location
+		# scoring
+		score_incr, clear_text, b2b_next = scoring.calcScore(self.matrix,self.current_tetromino,self.mino_locations,self.level,self.b2b,self.prev2moves)
+		self.score += score_incr
+		self.b2b = b2b_next
+		self.prev_clear_text = clear_text
+		print(clear_text)
+
 		self.clearLines() # clear any filled lines before adding next tetromino
 		self.tetrominos.nextTetromino()
 		self.current_tetromino = self.tetrominos.getCurrentTetromino()
@@ -97,10 +113,15 @@ class Matrix:
 
 		self.placeTetromino()
 		self.hold_available = True # make hold available again
+		self.prev2moves.clear() # clear previous moves list
 
 	def swapHold(self):
 		if not self.hold_available: # check if hold is available first
 			return False
+
+		self.prev2moves.append(("SWAPHOLD",None))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
 
 		self.removeTetromino()
 		self.tetrominos.swapHold()
@@ -132,17 +153,26 @@ class Matrix:
 
 	def rotateCW(self):
 		self.removeTetromino()
-		self.mino_locations, self.tetromino_orientation = rotations.rotateCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotateCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.prev2moves.append(("ROTATION",kick_dist))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
 		self.placeTetromino()
 		
 	def rotateCCW(self):
 		self.removeTetromino()
-		self.mino_locations, self.tetromino_orientation = rotations.rotateCCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotateCCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.prev2moves.append(("ROTATION",kick_dist))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
 		self.placeTetromino()
 
 	def rotate180(self):
 		self.removeTetromino()
-		self.mino_locations, self.tetromino_orientation = rotations.rotate180(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotate180(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.prev2moves.append(("ROTATION",kick_dist))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
 		self.placeTetromino()
 
 	def shiftLeft(self):
@@ -176,6 +206,9 @@ class Matrix:
 	def freezeTetromino(self): # freezes tetromino at current position
 		while(self.enforceGravity()):
 			pass
+		self.prev2moves.append(("AUTOLOCK",None))
+		if len(self.prev2moves) > 2:
+			self.prev2moves.pop(0)
 		self.addTetromino()
 
 	def enforceGravity(self):
@@ -203,6 +236,7 @@ class Matrix:
 			res.insert(0,np.zeros(self.matrix.shape[1]))
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
+		self.current_zone += cnt
 		return cnt > 0
 
 	def resetMatrix(self,clear_lines=True,clear_score=True):

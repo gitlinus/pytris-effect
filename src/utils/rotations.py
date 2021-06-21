@@ -182,8 +182,8 @@ def getKicks(matrix, tetromino, mino_locations, state_begin, state_end):
 		for i in range(4):
 			candidates.pop(0)
 		if validPosition(matrix,candidates):
-			return True, candidates
-	return False, None
+			return True, candidates, abs(kick[0]) + abs(kick[1])
+	return False, None, None
 
 def rotateCW(matrix, tetromino, mino_locations, orientation):
 	candidates = mino_locations.copy()
@@ -193,14 +193,14 @@ def rotateCW(matrix, tetromino, mino_locations, orientation):
 		candidates.append((int(res[0]),int(res[1])))
 	for i in range(4):
 		candidates.pop(0)
-	status, candidates = getKicks(matrix, tetromino, candidates, orientation, (orientation+1)%4)
+	status, candidates, kick_dist = getKicks(matrix, tetromino, candidates, orientation, (orientation+1)%4)
 	if status:
 		orientation += 1
 		orientation %= 4
 		mino_locations = candidates
 	# print("STATUS CW: ")
 	# print(status)
-	return mino_locations, orientation
+	return mino_locations, orientation, kick_dist
 
 def rotateCCW(matrix, tetromino, mino_locations, orientation):
 	candidates = mino_locations.copy()
@@ -210,14 +210,14 @@ def rotateCCW(matrix, tetromino, mino_locations, orientation):
 		candidates.append((int(res[0]),int(res[1])))
 	for i in range(4):
 		candidates.pop(0)
-	status, candidates = getKicks(matrix, tetromino, candidates, orientation, (orientation-1)%4)
+	status, candidates, kick_dist = getKicks(matrix, tetromino, candidates, orientation, (orientation-1)%4)
 	if status:
 		orientation -= 1
 		orientation %= 4
 		mino_locations = candidates
 	# print("STATUS CCW: ")
 	# print(status)
-	return mino_locations, orientation
+	return mino_locations, orientation, kick_dist
 
 def rotate180(matrix, tetromino, mino_locations, orientation):
 	candidates = mino_locations.copy()
@@ -228,11 +228,11 @@ def rotate180(matrix, tetromino, mino_locations, orientation):
 			candidates.append((int(res[0]),int(res[1])))
 		for i in range(4):
 			candidates.pop(0)
-	status, candidates = getKicks(matrix, tetromino, candidates, orientation, (orientation+2)%4)
+	status, candidates, kick_dist = getKicks(matrix, tetromino, candidates, orientation, (orientation+2)%4)
 	if status:
 		orientation += 2
 		orientation %= 4
 		mino_locations = candidates
-	return mino_locations, orientation
+	return mino_locations, orientation, kick_dist
 
 genOrientations()

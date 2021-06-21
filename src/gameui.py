@@ -42,6 +42,7 @@ shift_once = False
 cancel_das = True # leave true by default
 
 ghostPiece = True
+showGrid = True
 
 enforce_auto_lock = True # turns on auto locking of pieces when they touch the stack if True
 move_reset = 15 # the maximum number of moves the player can make after the tetromino touches the stack
@@ -166,7 +167,7 @@ def drawGhost(): # draws ghost piece
                                     matrix_left_top[1]+(dist+pos[0]-2)*m.mino_dim),
                                     (m.mino_dim,m.mino_dim))
                     )
-def drawGrid(showGrid=True):
+def drawGrid():
 # draw grid
     if showGrid:
         for i in range(11): #vertical lines
@@ -189,7 +190,7 @@ def drawText():
     Label(font,getStats(),yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+2*m.height//3+font_size),"topright").draw(screen)
 
 def drawZoneMeter():
-    percentage_filled = 0.75 # m.current_zone / m.full_zone # to be implemented later
+    percentage_filled = m.current_zone / m.full_zone 
     if 0 < percentage_filled and percentage_filled < 0.5: # draw triangle
         height = math.sqrt(percentage_filled * 8 * font_size * font_size)
         shift = math.tan(math.pi/4) * height
