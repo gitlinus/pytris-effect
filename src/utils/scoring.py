@@ -33,6 +33,8 @@ def filledLines(matrix): # returns number of filled lines, total lines
 
 def isRotationMini(prev2moves):
 	print(prev2moves)
+	if len(prev2moves) != 2:
+		return False, False
 	if prev2moves[1][0] == "AUTOLOCK" or (prev2moves[1][0] == "TRANSLATION" and prev2moves[1][1]==0):
 		if prev2moves[0][1] != None:
 			return prev2moves[0][0] == "ROTATION", prev2moves[0][1] < 2

@@ -26,6 +26,8 @@ black = 0, 0, 0
 white = 255, 255, 255
 grey = 128, 128, 128
 yellow = 255, 255, 0
+purple = 255, 0, 255
+light_blue = 0, 127, 255
 zone_colour = pygame.Color('dodgerblue')
 
 gravity = 1 # number of blocks per second at which the tetromino falls
@@ -213,6 +215,36 @@ def drawZoneMeter():
     else:
         pygame.draw.polygon(screen, grey, zone_points, width=5)
     zone_label.draw(screen)
+
+clear_flag = None
+clear_text = []
+track_clear_text = []
+def drawClearText():
+    global clear_flag, clear_text, track_clear_text
+    if m.prev_clear_text != [''] and m.prev_clear_text != track_clear_text:
+        track_clear_text = m.prev_clear_text
+        clear_text.clear()
+        clear_flag = pygame.time.get_ticks()
+        for i in range(len(m.prev_clear_text)):
+            if m.prev_clear_text[i].find("PERFECT CLEAR") != -1:
+                clear_text.append(Label(font,m.prev_clear_text[i],yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+(5+i)*font_size),"topright"))
+            elif m.prev_clear_text[i].find("T-SPIN") != -1:
+                clear_text.append(Label(font,m.prev_clear_text[i],purple,(matrix_left_top[0]-offset,matrix_left_top[1]+(5+i)*font_size),"topright"))
+            elif m.prev_clear_text[i].find("B2B") != -1:
+                clear_text.append(Label(font,m.prev_clear_text[i],light_blue,(matrix_left_top[0]-offset,matrix_left_top[1]+(5+i)*font_size),"topright"))
+            else:
+                clear_text.append(Label(font,m.prev_clear_text[i],white,(matrix_left_top[0]-offset,matrix_left_top[1]+(5+i)*font_size),"topright"))
+        for msg in clear_text:
+            msg.draw(screen)
+    else:
+        if clear_flag != None:
+            if(pygame.time.get_ticks() - clear_flag <= 2000): # show for 2 seconds max
+                for msg in clear_text:
+                    msg.draw(screen)
+            else:
+                clear_flag = None
+        if m.prev_clear_text == ['']:
+            track_clear_text.clear()
 
 def getStats(): # number of lines cleared
     return str(m.getLines())
@@ -425,6 +457,7 @@ while 1:
     drawQueue()
     drawHold()
     drawText()
+    drawClearText()
     drawZoneMeter()
     pygame.display.flip()
 

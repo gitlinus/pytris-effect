@@ -234,7 +234,7 @@ class Matrix:
 		self.combo = self.combo+1 if cnt > 0 else 0
 		self.score += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0
 		if self.combo > 1:
-			self.prev_clear_text.append("COMBO "+str(self.combo-1))
+			self.prev_clear_text.append(str(self.combo-1)+" COMBO")
 		print(self.prev_clear_text)
 		return cnt > 0
 
