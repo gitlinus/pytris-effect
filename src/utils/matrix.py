@@ -101,7 +101,6 @@ class Matrix:
 		self.score += score_incr
 		self.b2b = b2b_next
 		self.prev_clear_text = clear_text
-		print(clear_text)
 
 		self.clearLines() # clear any filled lines before adding next tetromino
 		self.tetrominos.nextTetromino()
@@ -150,6 +149,7 @@ class Matrix:
 			if found: break
 			else: dist = r
 		self.translateTetromino(dist,0)
+		self.score += 2*dist
 		self.addTetromino()
 
 	def rotateCW(self):
@@ -190,6 +190,7 @@ class Matrix:
 			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				return False
 		self.translateTetromino(1,0)
+		self.score += 1
 		return True
 
 	def touchedStack(self): # checks whether tetromino has touched the matrix stack
@@ -230,6 +231,11 @@ class Matrix:
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
 		self.current_zone += cnt
+		self.combo = self.combo+1 if cnt > 0 else 0
+		self.score += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0
+		if self.combo > 1:
+			self.prev_clear_text.append("COMBO "+str(self.combo-1))
+		print(self.prev_clear_text)
 		return cnt > 0
 
 	def resetMatrix(self,clear_lines=True,clear_score=True):
