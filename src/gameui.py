@@ -3,6 +3,7 @@ import pygame
 import pyautogui
 import time
 import numpy as np
+import math
 from .utils import matrix
 from .utils import config
 
@@ -18,13 +19,14 @@ matrix_left_top = (screen_width-m.width)//2, (screen_height-m.height)//2
 
 pygame.display.set_caption('Pytris Effect')
 
-font_size = m.mino_dim
+font_size = m.mino_dim # font_size should be the same as the width of a single mino
 font = pygame.font.Font(None,font_size)
 
 black = 0, 0, 0
 white = 255, 255, 255
 grey = 128, 128, 128
 yellow = 255, 255, 0
+zone_colour = pygame.Color('dodgerblue')
 
 gravity = 1 # number of blocks per second at which the tetromino falls
 das = 120 # (delayed auto-shift) number of milleseconds before arr sets in
@@ -62,6 +64,15 @@ class Label:
 time_label = Label(font,"TIME",yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3))
 score_label = Label(font,"SCORE",yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+3*font_size))
 lines_label = Label(font,"LINES",yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+2*m.height//3),"topright")
+zone_label = Label(font,"ZONE",yellow,(matrix_left_top[0]-offset-2*font_size,matrix_left_top[1]+m.height-2*font_size),"center")
+# zone shape is a square diamond, diagonal length = 4*font_size
+zone_points = [
+                (matrix_left_top[0]-offset-2*font_size,matrix_left_top[1]+m.height-4*font_size),
+                (matrix_left_top[0]-offset,matrix_left_top[1]+m.height-2*font_size),
+                (matrix_left_top[0]-offset-2*font_size,matrix_left_top[1]+m.height),
+                (matrix_left_top[0]-offset-4*font_size,matrix_left_top[1]+m.height-2*font_size)
+            ] # top, right, bottom, left
+zone_center = (matrix_left_top[0]-offset-2*font_size,matrix_left_top[1]+m.height-2*font_size)
 
 def drawMatrix():
     pygame.draw.rect(screen,white,pygame.Rect(matrix_left_top,m.dim()))
@@ -176,6 +187,31 @@ def drawText():
     Label(font,getScore(),yellow,(matrix_left_top[0]+m.width+offset,matrix_left_top[1]+2*m.height//3+4*font_size)).draw(screen)
     lines_label.draw(screen)
     Label(font,getStats(),yellow,(matrix_left_top[0]-offset,matrix_left_top[1]+2*m.height//3+font_size),"topright").draw(screen)
+
+def drawZoneMeter():
+    percentage_filled = 0.75 # m.current_zone / m.full_zone # to be implemented later
+    if 0 < percentage_filled and percentage_filled < 0.5: # draw triangle
+        height = math.sqrt(percentage_filled * 8 * font_size * font_size)
+        shift = math.tan(math.pi/4) * height
+        right_point = (zone_center[0] + shift, zone_points[2][1] - height)
+        left_point = (zone_center[0] - shift, zone_points[2][1] - height)
+        pygame.draw.polygon(screen, zone_colour, [right_point, zone_points[2], left_point])
+    elif percentage_filled == 0.5:
+        pygame.draw.polygon(screen, zone_colour, [zone_points[1], zone_points[2], zone_points[3]])
+    elif percentage_filled > 0.5 and percentage_filled < 1:
+        height = math.sqrt((1-percentage_filled) * 8 * font_size * font_size)
+        shift = math.tan(math.pi/4) * height
+        right_point = (zone_center[0] + shift, zone_points[0][1] + height)
+        left_point = (zone_center[0] - shift, zone_points[0][1] + height)
+        pygame.draw.polygon(screen, zone_colour, zone_points)
+        pygame.draw.polygon(screen, black, [left_point, zone_points[0], right_point])
+    elif percentage_filled >= 1:
+        pygame.draw.polygon(screen, zone_colour, zone_points)
+    if percentage_filled >= 1: # yellow border if filled
+        pygame.draw.polygon(screen, yellow, zone_points, width=5)
+    else:
+        pygame.draw.polygon(screen, grey, zone_points, width=5)
+    zone_label.draw(screen)
 
 def getStats(): # number of lines cleared
     return str(m.getLines())
@@ -388,6 +424,7 @@ while 1:
     drawQueue()
     drawHold()
     drawText()
+    drawZoneMeter()
     pygame.display.flip()
 
     end_tick = pygame.time.get_ticks()

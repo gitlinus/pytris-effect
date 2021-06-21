@@ -35,9 +35,9 @@ class Matrix:
 	}
 
 	def __init__(self, mino_dim=30):
-		self.mino_dim = mino_dim
-		self.width = mino_dim * 10
-		self.height = mino_dim * 20
+		self.mino_dim = mino_dim # dimensions in number of pixels (only used for GUI)
+		self.width = mino_dim * 10 # dimensions in number of pixels (only used for GUI)
+		self.height = mino_dim * 20 # dimensions in number of pixels (only used for GUI)
 		self.matrix = np.zeros((22,10),dtype=int)
 		self.score = 0
 		self.lines_cleared = 0
@@ -47,6 +47,8 @@ class Matrix:
 		self.tetromino_orientation = 0 # keeps track of orientation of current tetromino (0 to 3)
 		self.hold_available = False
 		self.placed_tetromino = False # keeps track whether tetromino was placed into matrix yet
+		self.current_zone = None
+		self.full_zone = None
 
 	def dim(self):
 		return self.width, self.height
