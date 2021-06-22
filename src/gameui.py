@@ -79,29 +79,21 @@ class GameUI:
 
             self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
 
-            self.time_label = Label(
-                self.font, "TIME", self.yellow,
-                (self.matrix_left_top[0] + self.m.width + self.offset,
-                 self.matrix_left_top[1] + 2 * self.m.height // 3))
-            self.score_label = Label(
-                self.font, "SCORE", self.yellow,
-                (self.matrix_left_top[0] + self.m.width + self.offset,
-                 self.matrix_left_top[1] + 2 * self.m.height // 3 + 3 * self.font_size))
-            self.lines_label = Label(
-                self.font, "LINES", self.yellow,
+            self.time_label = Label(self.font, "TIME", self.yellow,
+                (self.matrix_left_top[0] + self.m.width + self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3))
+            self.score_label = Label(self.font, "SCORE", self.yellow,
+                (self.matrix_left_top[0] + self.m.width + self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3 + 3 * self.font_size))
+            self.lines_label = Label(self.font, "LINES", self.yellow,
                 (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3), "topright")
-            self.zone_label = Label(
-                self.font, "ZONE", self.yellow,
-                (self.matrix_left_top[0] - self.offset - 2 * self.font_size,
-                 self.matrix_left_top[1] + self.m.height - 2 * self.font_size), "center")
+            self.zone_label = Label(self.font, "ZONE", self.yellow,
+                (self.matrix_left_top[0] - self.offset - 2 * self.font_size, self.matrix_left_top[1] + self.m.height - 2 * self.font_size), "center")
+            
             # zone shape is a square diamond, diagonal length = 4*font_size
             self.zone_points = [
-                (self.matrix_left_top[0] - self.offset - 2 * self.font_size,
-                 self.matrix_left_top[1] + self.m.height - 4 * self.font_size),
+                (self.matrix_left_top[0] - self.offset - 2 * self.font_size,self.matrix_left_top[1] + self.m.height - 4 * self.font_size),
                 (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + self.m.height - 2 * self.font_size),
                 (self.matrix_left_top[0] - self.offset - 2 * self.font_size, self.matrix_left_top[1] + self.m.height),
-                (self.matrix_left_top[0] - self.offset - 4 * self.font_size,
-                 self.matrix_left_top[1] + self.m.height - 2 * self.font_size)
+                (self.matrix_left_top[0] - self.offset - 4 * self.font_size,self.matrix_left_top[1] + self.m.height - 2 * self.font_size)
             ]  # top, right, bottom, left
             self.zone_center = (
                 self.matrix_left_top[0] - self.offset - 2 * self.font_size,
@@ -208,37 +200,28 @@ class GameUI:
         if self.showGrid:
             for i in range(11):  # vertical lines
                 pygame.draw.line(self.screen, self.grey,
-                                 (self.matrix_left_top[0] + i * self.m.mino_dim,
-                                  self.matrix_left_top[1] - 2 * self.m.mino_dim),
-                                 (
-                                     self.matrix_left_top[0] + i * self.m.mino_dim,
-                                     self.matrix_left_top[1] + self.m.height)
-                                 )
+                                 (self.matrix_left_top[0] + i * self.m.mino_dim, self.matrix_left_top[1] - 2 * self.m.mino_dim),
+                                 (self.matrix_left_top[0] + i * self.m.mino_dim, self.matrix_left_top[1] + self.m.height)
+                                )
             for i in range(22):  # horizontal lines
                 pygame.draw.line(self.screen, self.grey,
                                  (self.matrix_left_top[0], self.matrix_left_top[1] + (i - 1) * self.m.mino_dim),
-                                 (self.matrix_left_top[0] + self.m.width,
-                                  self.matrix_left_top[1] + (i - 1) * self.m.mino_dim)
-                                 )
+                                 (self.matrix_left_top[0] + self.m.width, self.matrix_left_top[1] + (i - 1) * self.m.mino_dim)
+                                )
 
     def drawText(self):
         self.time_label.draw(self.screen)
         Label(self.font, self.getTimer(), self.yellow,
               (self.matrix_left_top[0] + self.m.width + self.offset,
-               self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size)).draw(
-            self.screen)
+               self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size)).draw(self.screen)
         self.score_label.draw(self.screen)
         Label(self.font, self.getScore(), self.yellow, (
             self.matrix_left_top[0] + self.m.width + self.offset,
-            self.matrix_left_top[1] + 2 * self.m.height // 3 + 4 * self.font_size)).draw(
-            self.screen)
+            self.matrix_left_top[1] + 2 * self.m.height // 3 + 4 * self.font_size)).draw(self.screen)
         self.lines_label.draw(self.screen)
         Label(self.font, self.getStats(), self.yellow,
-              (
-                  self.matrix_left_top[0] - self.offset,
-                  self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size),
-              "topright").draw(
-            self.screen)
+              (self.matrix_left_top[0] - self.offset,
+                self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size),"topright").draw(self.screen)
 
     def drawZoneMeter(self):
         percentage_filled = self.m.current_zone / self.m.full_zone
@@ -273,21 +256,17 @@ class GameUI:
             self.clear_flag = pygame.time.get_ticks()
             for i in range(len(self.m.prev_clear_text)):
                 if self.m.prev_clear_text[i].find("PERFECT CLEAR") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.yellow, (
-                        self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),
-                                                 "topright"))
+                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.yellow, 
+                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 elif self.m.prev_clear_text[i].find("T-SPIN") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], purple, (
-                        self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),
-                                                 "topright"))
+                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.purple, 
+                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 elif self.m.prev_clear_text[i].find("B2B") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], light_blue, (
-                        self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),
-                                                 "topright"))
+                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.light_blue, 
+                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 else:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.white, (
-                        self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),
-                                                 "topright"))
+                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.white, 
+                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
             for msg in self.clear_text:
                 msg.draw(self.screen)
         else:
@@ -392,24 +371,16 @@ class GameUI:
             self.das_direction = None
 
         if self.cancel_das:
-            if self.left_das_tick is None and (keys[config.action2key["SHIFT_LEFT"]] and
-                                               not keys[config.action2key[
-                                                   "SHIFT_RIGHT"]]):  # das was cancelled but key was held down still
+            if self.left_das_tick is None and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]):  # das was cancelled but key was held down still
                 self.left_das_tick = current_tick
                 self.das_direction = "LEFT"
-            if self.right_das_tick is None and (keys[config.action2key["SHIFT_RIGHT"]] and
-                                                not keys[config.action2key[
-                                                    "SHIFT_LEFT"]]):  # das was cancelled but key was held down still
+            if self.right_das_tick is None and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]):  # das was cancelled but key was held down still
                 self.right_das_tick = current_tick
                 self.das_direction = "RIGHT"
         else:
-            if self.das_direction == "RIGHT" and (keys[config.action2key["SHIFT_LEFT"]] and
-                                                  not keys[config.action2key[
-                                                      "SHIFT_RIGHT"]]):  # direction changed but no das cancellation
+            if self.das_direction == "RIGHT" and (keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]):  # direction changed but no das cancellation
                 self.das_direction = "LEFT"
-            if self.das_direction == "LEFT" and (keys[config.action2key["SHIFT_RIGHT"]] and
-                                                 not keys[config.action2key[
-                                                     "SHIFT_LEFT"]]):  # direction changed but no das cancellation
+            if self.das_direction == "LEFT" and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[config.action2key["SHIFT_LEFT"]]):  # direction changed but no das cancellation
                 self.das_direction = "RIGHT"
 
         if self.das_direction == "LEFT" and self.left_das_tick is not None:  # das was already started
