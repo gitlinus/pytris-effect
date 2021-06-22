@@ -93,7 +93,7 @@ class GameUI:
             self.zone_label = Label(
                 self.font, "ZONE", self.yellow,
                 (self.matrix_left_top[0] - self.offset - 2 * self.font_size,
-                 self.matrix_left_top[1] + self.self.m.height - 2 * self.font_size), "center")
+                 self.matrix_left_top[1] + self.m.height - 2 * self.font_size), "center")
             # zone shape is a square diamond, diagonal length = 4*font_size
             self.zone_points = [
                 (self.matrix_left_top[0] - self.offset - 2 * self.font_size,
@@ -223,17 +223,17 @@ class GameUI:
 
     def drawText(self):
         self.time_label.draw(self.screen)
-        Label(self.font, getTimer(), self.yellow,
+        Label(self.font, self.getTimer(), self.yellow,
               (self.matrix_left_top[0] + self.m.width + self.offset,
                self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size)).draw(
             self.screen)
         self.score_label.draw(self.screen)
-        Label(self.font, getScore(), self.yellow, (
+        Label(self.font, self.getScore(), self.yellow, (
             self.matrix_left_top[0] + self.m.width + self.offset,
             self.matrix_left_top[1] + 2 * self.m.height // 3 + 4 * self.font_size)).draw(
             self.screen)
         self.lines_label.draw(self.screen)
-        Label(self.font, getStats(), self.yellow,
+        Label(self.font, self.getStats(), self.yellow,
               (
                   self.matrix_left_top[0] - self.offset,
                   self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size),
@@ -257,7 +257,7 @@ class GameUI:
             right_point = (self.zone_center[0] + shift, self.zone_points[0][1] + height)
             left_point = (self.zone_center[0] - shift, self.zone_points[0][1] + height)
             pygame.draw.polygon(self.screen, self.zone_colour, self.zone_points)
-            pygame.draw.polygon(self.screen, black, [left_point, self.zone_points[0], right_point])
+            pygame.draw.polygon(self.screen, self.black, [left_point, self.zone_points[0], right_point])
         elif percentage_filled >= 1:
             pygame.draw.polygon(self.screen, self.zone_colour, self.zone_points)
         if percentage_filled >= 1:  # self.yellow border if filled
@@ -413,12 +413,12 @@ class GameUI:
                 self.das_direction = "RIGHT"
 
         if self.das_direction == "LEFT" and self.left_das_tick is not None:  # das was already started
-            if current_tick - self.left_das_tick >= das and keys[config.action2key["SHIFT_LEFT"]]:
+            if current_tick - self.left_das_tick >= self.das and keys[config.action2key["SHIFT_LEFT"]]:
                 # if pressed for das duration, set in arr
                 if self.left_arr_tick is None:
                     self.left_arr_tick = current_tick
                 else:  # set in arr
-                    if current_tick - self.left_arr_tick >= arr:
+                    if current_tick - self.left_arr_tick >= self.arr:
                         self.m.shiftLeft()
                         self.left_arr_tick = current_tick
                         self.getMoveStatus(tick=current_tick)
@@ -428,11 +428,11 @@ class GameUI:
                 self.getMoveStatus(tick=current_tick)
 
         elif self.das_direction == "RIGHT" and self.right_das_tick is not None:
-            if current_tick - self.right_das_tick >= das and keys[config.action2key["SHIFT_RIGHT"]]:
+            if current_tick - self.right_das_tick >= self.das and keys[config.action2key["SHIFT_RIGHT"]]:
                 if self.right_arr_tick is None:
                     self.right_arr_tick = current_tick
                 else:  # set in arr
-                    if current_tick - self.right_arr_tick >= arr:
+                    if current_tick - self.right_arr_tick >= self.arr:
                         self.m.shiftRight()
                         self.right_arr_tick = current_tick
                         self.getMoveStatus(tick=current_tick)
@@ -442,7 +442,7 @@ class GameUI:
                 self.getMoveStatus(tick=current_tick)
 
         if self.soft_drop_tick is not None and keys[config.action2key["SOFT_DROP"]]:  # treat soft drop like faster gravity
-            if (current_tick - self.soft_drop_tick) >= 1000 // soft_drop_speed:
+            if (current_tick - self.soft_drop_tick) >= 1000 // self.soft_drop_speed:
                 self.m.softDrop()
                 self.soft_drop_tick = current_tick
                 self.getMoveStatus(tick=current_tick)
@@ -495,6 +495,7 @@ class GameUI:
                         self.getMoveStatus(True)
 
     def run(self):
+        self.m.addTetromino()
         start_tick = pygame.time.get_ticks()
 
         while True:
@@ -506,7 +507,7 @@ class GameUI:
 
             self.getContinuousInput()
             self.enforceAutoLock()
-            self.screen.fill(black)
+            self.screen.fill(self.black)
             self.drawMatrix()
             self.drawGhost()
             self.drawGrid()
