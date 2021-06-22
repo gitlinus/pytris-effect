@@ -31,8 +31,8 @@ light_blue = 0, 127, 255
 zone_colour = pygame.Color('dodgerblue')
 
 gravity = 1 # number of blocks per second at which the tetromino falls
-das = 120 # (delayed auto-shift) number of milleseconds before arr sets in
-arr = 50 # (auto repeat rate) number of milleseconds in between each time the tetromino is shifted
+das = 100 # (delayed auto-shift) number of milleseconds before arr sets in
+arr = 4 # (auto repeat rate) number of milleseconds in between each time the tetromino is shifted
 soft_drop_speed = 10 # rate (minos per second) at which soft drop makes the tetromino fall
 das_direction = None
 left_das_tick = None

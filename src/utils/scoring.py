@@ -38,6 +38,8 @@ def isRotationMini(prev2moves):
 	if prev2moves[1][0] == "AUTOLOCK" or (prev2moves[1][0] == "TRANSLATION" and prev2moves[1][1]==0):
 		if prev2moves[0][1] != None:
 			return prev2moves[0][0] == "ROTATION", prev2moves[0][1] < 2
+		else:
+			return prev2moves[0][0] == "ROTATION", False
 	else:
 		return False, False
 
