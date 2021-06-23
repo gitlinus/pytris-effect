@@ -21,6 +21,32 @@ scoringTable = {
 	"PERFECT CLEAR":3000
 }
 
+zoneTable = {
+	0:"",
+	1:"MONOTRIS",
+	2:"DUOTRIS",
+	3:"TRITRIS",
+	4:"TETRATRIS",
+	5:"PENTATRIS",
+	6:"HEXATRIS",
+	7:"HEPTATRIS",
+	8:"OCTATRIS",
+	9:"ENNEATRIS",
+	10:"DECATRIS",
+	11:"HENDECATRIS",
+	12:"DODECATRIS",
+	13:"TRIDECATRIS",
+	14:"TETRADECATRIS",
+	15:"PENTADECATRIS",
+	16:"HEXADECATRIS",
+	17:"HEPTADECATRIS",
+	18:"OCTADECATRIS",
+	19:"ENNEADECATRIS",
+	20:"ICOSATRIS",
+	21:"ICOSIHENATRIS",
+	22:"ICOSIDITRIS"
+}
+
 def filledLines(matrix): # returns number of filled lines, total lines
 	cnt = 0
 	total = 0
@@ -121,3 +147,10 @@ def calcScore(matrix, tetromino, mino_locations, level, b2b, prev2moves): # comb
 		for i in clearText:
 			score += scoringTable[i]
 	return score, clearText, b2b_next
+
+def zoneScore(matrix):
+	cnt = 0
+	for i in range(matrix.shape[0]):
+		if np.all((matrix[i] == 8)): 
+			cnt += 1
+	return cnt * 1000, [zoneTable[cnt]]

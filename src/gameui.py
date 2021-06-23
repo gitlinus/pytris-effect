@@ -44,6 +44,8 @@ class GameUI:
         self.shift_once = False
         self.cancel_das = True  # leave true by default
 
+        self.start_zone_tick = None
+
         self.ghostPiece = True
         self.showGrid = True
 
@@ -224,6 +226,7 @@ class GameUI:
                 self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size),"topright").draw(self.screen)
 
     def drawZoneMeter(self):
+        self.getZoneTimer()
         percentage_filled = self.m.current_zone / self.m.full_zone
         if 0 < percentage_filled < 0.5:  # draw triangle
             height = math.sqrt(percentage_filled * 8 * self.font_size * self.font_size)
@@ -249,6 +252,12 @@ class GameUI:
             pygame.draw.polygon(self.screen, self.grey, self.zone_points, width=5)
         self.zone_label.draw(self.screen)
 
+        # draw border around matrix for zone
+        if self.m.zone_state:
+            pygame.draw.polygon(self.screen, self.zone_colour, [self.matrix_left_top, (self.matrix_left_top[0]+self.m.width,self.matrix_left_top[1]), 
+                                                                    (self.matrix_left_top[0]+self.m.width,self.matrix_left_top[1]+self.m.height),
+                                                                    (self.matrix_left_top[0],self.matrix_left_top[1]+self.m.height)], width=10)
+
     def drawClearText(self):
         if self.m.prev_clear_text != [''] and self.m.prev_clear_text != self.track_clear_text:
             self.track_clear_text = self.m.prev_clear_text
@@ -264,6 +273,9 @@ class GameUI:
                 elif self.m.prev_clear_text[i].find("B2B") != -1:
                     self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.light_blue, 
                         (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
+                elif self.m.prev_clear_text[i].find("TRIS") != -1:
+                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.zone_colour, 
+                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 else:
                     self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.white, 
                         (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
@@ -278,6 +290,18 @@ class GameUI:
                     self.clear_flag = None
             if self.m.prev_clear_text == ['']:
                 self.track_clear_text.clear()
+
+    def getZoneTimer(self):
+        if self.m.zone_state:
+            current_tick = pygame.time.get_ticks()
+            if self.m.current_zone == 0:
+                self.m.leaveZone()
+                self.start_zone_tick = None
+                return
+            if current_tick - self.start_zone_tick >= 500: # full zone (40 lines) -> 20 zone seconds
+                self.m.current_zone -= 1
+                self.start_zone_tick = current_tick
+                return
 
     def getStats(self):  # number of lines cleared
         return str(self.m.getLines())
@@ -350,6 +374,11 @@ class GameUI:
                     print("RESET")
                     self.m.resetMatrix()
                     self.m.addTetromino()
+                elif config.key2action[key_press] == "ACTIVATE_ZONE":
+                    print("ACTIVATE_ZONE")
+                    if self.m.zoneReady() and self.start_zone_tick==None:
+                        self.m.activateZone()
+                        self.start_zone_tick = pygame.time.get_ticks()
 
         elif key_event == pygame.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:

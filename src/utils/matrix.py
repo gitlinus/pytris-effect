@@ -5,7 +5,7 @@ from . import scoring
 
 class Matrix:
 	# colour and index assignment
-	index2rgb = {0:(0,0,0),1:(0,255,255),2:(0,0,255),3:(255,128,0),4:(255,255,0),5:(0,255,0),6:(255,0,255),7:(255,0,0)}
+	index2rgb = {0:(0,0,0),1:(0,255,255),2:(0,0,255),3:(255,128,0),4:(255,255,0),5:(0,255,0),6:(255,0,255),7:(255,0,0),8:(64,64,64)}
 	tetromino2rgb = {'I':(0,255,255),'J':(0,0,255),'L':(255,128,0),'O':(255,255,0),'S':(0,255,0),'T':(255,0,255),'Z':(255,0,0)}
 	tetromino2index = {'I':1,'J':2,'L':3,'O':4,'S':5,'T':6,'Z':7}
 
@@ -49,12 +49,13 @@ class Matrix:
 		self.tetromino_orientation = 0 # keeps track of orientation of current tetromino (0 to 3)
 		self.hold_available = False
 		self.placed_tetromino = False # keeps track whether tetromino was placed into matrix yet
-		self.current_zone = 0
-		self.full_zone = 40
 		self.combo = 0
 		self.b2b = False
 		self.prev2moves = []
 		self.prev_clear_text = []
+		self.current_zone = 0
+		self.full_zone = 40
+		self.zone_state = False
 
 	def dim(self):
 		return self.width, self.height
@@ -96,26 +97,42 @@ class Matrix:
 		self.appendPrevMoves("TRANSLATION",abs(drow)+abs(dcol))
 
 	def addTetromino(self): # set piece spawn location
-		# scoring
-		score_incr, clear_text, b2b_next = scoring.calcScore(self.matrix,self.current_tetromino,self.mino_locations,self.level,self.b2b,self.prev2moves)
-		self.score += score_incr
-		self.b2b = b2b_next
-		self.prev_clear_text = clear_text
+		if not self.zone_state:
+			# scoring
+			score_incr, clear_text, b2b_next = scoring.calcScore(self.matrix,self.current_tetromino,self.mino_locations,self.level,self.b2b,self.prev2moves)
+			self.score += score_incr
+			self.b2b = b2b_next
+			self.prev_clear_text = clear_text
 
-		self.clearLines() # clear any filled lines before adding next tetromino
-		self.tetrominos.nextTetromino()
-		self.current_tetromino = self.tetrominos.getCurrentTetromino()
-		self.tetromino_orientation = 0
-		self.mino_locations.clear()
-		self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
+			self.clearLines() # clear any filled lines before adding next tetromino
+			self.tetrominos.nextTetromino()
+			self.current_tetromino = self.tetrominos.getCurrentTetromino()
+			self.tetromino_orientation = 0
+			self.mino_locations.clear()
+			self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
 
-		for i in self.mino_locations: 
-			if self.matrix[i[0],i[1]] != 0:
-				raise Exception("Topped out")
+			for i in self.mino_locations: # topping out determined if piece can spawn
+				if self.matrix[i[0],i[1]] != 0:
+					raise Exception("Topped out")
 
-		self.placeTetromino()
-		self.hold_available = True # make hold available again
-		self.prev2moves.clear() # clear previous moves list
+			self.placeTetromino()
+			self.hold_available = True # make hold available again
+			self.prev2moves.clear() # clear previous moves list
+		else:
+			self.clearZone() # clear any filled lines before adding next tetromino
+			self.tetrominos.nextTetromino()
+			self.current_tetromino = self.tetrominos.getCurrentTetromino()
+			self.tetromino_orientation = 0
+			self.mino_locations.clear()
+			self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
+
+			for i in self.mino_locations: 
+				if self.matrix[i[0],i[1]] != 0:
+					self.leaveZone()
+
+			self.placeTetromino()
+			self.hold_available = True # make hold available again
+			self.prev2moves.clear() # clear previous moves list
 
 	def swapHold(self):
 		if not self.hold_available: # check if hold is available first
@@ -129,9 +146,14 @@ class Matrix:
 		self.mino_locations.clear()
 		self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
 
-		for i in self.mino_locations: 
-			if self.matrix[i[0],i[1]] != 0:
-				raise Exception("Topped out")
+		if not self.zone_state:
+			for i in self.mino_locations: 
+				if self.matrix[i[0],i[1]] != 0:
+					raise Exception("Topped out")
+		else:
+			for i in self.mino_locations: 
+				if self.matrix[i[0],i[1]] != 0:
+					self.leaveZone()
 
 		self.placeTetromino()
 		self.hold_available = False
@@ -206,14 +228,8 @@ class Matrix:
 		self.addTetromino()
 
 	def enforceGravity(self):
-		"""
-		shift mino locations down by 1, check for collisions, 
-		clear old locations, store new locations
-		"""
 		for i in self.mino_locations:
 			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
-				if i[0]==0 or i[0]==1:
-					raise Exception("Topped out")
 				return False
 		self.translateTetromino(1,0)
 		return True
@@ -230,13 +246,51 @@ class Matrix:
 			res.insert(0,np.zeros(self.matrix.shape[1]))
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
-		self.current_zone += cnt
+		self.current_zone = min(self.current_zone+cnt,self.full_zone)
 		self.combo = self.combo+1 if cnt > 0 else 0
 		self.score += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0
 		if self.combo > 1:
 			self.prev_clear_text.append(str(self.combo-1)+" COMBO")
 		print(self.prev_clear_text)
 		return cnt > 0
+
+	def clearZone(self): # basically clearLines but for zone
+		res, cnt = [], 0 # resultant matrix, number of lines cleared
+		for i in range(self.matrix.shape[0]):
+			if not np.all((self.matrix[i] > 0)): 
+				res.append(self.matrix[i][:])
+			else:
+				cnt += 1
+		for i in range(cnt):
+			res.append(np.ones(self.matrix.shape[1])*8) # append cleared lines to bottom of stack
+		while len(res) < self.matrix.shape[0]:
+			res.insert(0,np.zeros(self.matrix.shape[1]))
+		self.matrix = np.asarray(res,dtype=int)
+
+	def zoneReady(self):
+		return self.current_zone >= self.full_zone
+
+	def activateZone(self):
+		if self.zoneReady() and not self.zone_state:
+			self.zone_state = True
+			self.prev_clear_text.clear()
+
+	def leaveZone(self):
+		if self.zone_state:
+			self.current_zone = 0
+			self.zone_state = False
+			score_incr, clear_text = scoring.zoneScore(self.matrix)
+			self.score += score_incr
+			self.prev_clear_text = clear_text
+			self.removeTetromino()
+			res = []
+			for i in range(self.matrix.shape[0]): # remove zone lines
+				if not np.all((self.matrix[i] > 0)): 
+					res.append(self.matrix[i][:])
+			while len(res) < self.matrix.shape[0]:
+				res.insert(0,np.zeros(self.matrix.shape[1]))
+			self.matrix = np.asarray(res,dtype=int)
+			self.placeTetromino()
 
 	def resetMatrix(self,clear_lines=True,clear_score=True):
 		temp1 = 0
