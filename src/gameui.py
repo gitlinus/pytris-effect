@@ -44,6 +44,7 @@ class GameUI:
         self.shift_once = False
         self.cancel_das = True  # leave true by default
 
+        self.game_start_tick = None
         self.start_zone_tick = None
 
         self.ghostPiece = True
@@ -307,7 +308,7 @@ class GameUI:
         return str(self.m.getLines())
 
     def getTimer(self):  # time elapsed
-        time_passed = pygame.time.get_ticks()
+        time_passed = pygame.time.get_ticks() - self.game_start_tick
         hours = time_passed // 1000 // 60 // 60
         minutes = time_passed // 1000 // 60 % 60
         seconds = time_passed // 1000 % 60
@@ -374,6 +375,7 @@ class GameUI:
                     print("RESET")
                     self.m.resetMatrix()
                     self.m.addTetromino()
+                    self.game_start_tick = pygame.time.get_ticks()
                 elif config.key2action[key_press] == "ACTIVATE_ZONE":
                     print("ACTIVATE_ZONE")
                     if self.m.zoneReady() and self.start_zone_tick==None:
@@ -496,6 +498,7 @@ class GameUI:
 
     def run(self):
         self.m.addTetromino()
+        self.game_start_tick = pygame.time.get_ticks()
         start_tick = pygame.time.get_ticks()
 
         while True:
