@@ -1,4 +1,5 @@
-import numpy as np 
+import numpy as np
+import sys
 from . import tetromino
 from . import rotations
 from . import scoring
@@ -56,6 +57,7 @@ class Matrix:
 		self.current_zone = 0
 		self.full_zone = 40
 		self.zone_state = False
+		self.game_over = False
 
 	def dim(self):
 		return self.width, self.height
@@ -113,7 +115,10 @@ class Matrix:
 
 			for i in self.mino_locations: # topping out determined if piece can spawn
 				if self.matrix[i[0],i[1]] != 0:
-					raise Exception("Topped out")
+					# print("Topped out", file=sys.stderr)
+					self.game_over = True
+					return
+					# raise Exception("Topped out")
 
 			self.placeTetromino()
 			self.hold_available = True # make hold available again
@@ -149,7 +154,9 @@ class Matrix:
 		if not self.zone_state:
 			for i in self.mino_locations: 
 				if self.matrix[i[0],i[1]] != 0:
-					raise Exception("Topped out")
+					self.game_over = True
+					return
+					# raise Exception("Topped out")
 		else:
 			for i in self.mino_locations: 
 				if self.matrix[i[0],i[1]] != 0:
