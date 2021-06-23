@@ -282,6 +282,7 @@ class Matrix:
 			score_incr, clear_text = scoring.zoneScore(self.matrix)
 			self.score += score_incr
 			self.prev_clear_text = clear_text
+			print(self.prev_clear_text)
 			self.removeTetromino()
 			res = []
 			for i in range(self.matrix.shape[0]): # remove zone lines
