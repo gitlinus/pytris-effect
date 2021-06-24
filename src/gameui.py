@@ -28,7 +28,8 @@ class GameUI:
     light_blue = 0, 127, 255
 
     def __init__(self,
-                 graphic_mode=True):
+                 graphic_mode=True,
+                 **kwargs):
 
         self.gravity = 1  # number of blocks per second at which the tetromino falls
         self.das = 100  # (delayed auto-shift) number of milleseconds before arr sets in
@@ -101,33 +102,51 @@ class GameUI:
             self.zone_center = (
                 self.matrix_left_top[0] - self.offset - 2 * self.font_size,
                 self.matrix_left_top[1] + self.m.height - 2 * self.font_size)
+        else:
+            self.m = matrix.Matrix()
+            self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
+            self.its_per_tick = kwargs['its_per_sec'] * kwargs['sec_per_tick']
+            self.its_for_lock = kwargs['its_per_sec'] * self.lock_delay / 1000.0
+            self.phase = 0
+            self.score = 0
+            self.ticks = 0
 
     def drawMatrix(self):
-        pygame.draw.rect(self.screen, self.white, pygame.Rect(self.matrix_left_top, self.m.dim()))
+        """When using graphics, draw the board. When using api, return the board"""
+        if self.use_graphics:
+            pygame.draw.rect(self.screen, self.white, pygame.Rect(self.matrix_left_top, self.m.dim()))
 
-        # draw piece spawn area:
-        for i in range(2):
-            for j in range(10):
-                if self.m.matrix[i, j] != 0:
-                    pygame.draw.rect(
-                        self.screen,
-                        self.m.index2rgb[self.m.matrix[i, j]],
-                        pygame.Rect((self.matrix_left_top[0] + j * self.m.mino_dim,
-                                     self.matrix_left_top[1] - (2 - i) * self.m.mino_dim),
-                                    (self.m.mino_dim, self.m.mino_dim))
-                    )
+            # draw piece spawn area:
+            for i in range(2):
+                for j in range(10):
+                    if self.m.matrix[i, j] != 0:
+                        pygame.draw.rect(
+                            self.screen,
+                            self.m.index2rgb[self.m.matrix[i, j]],
+                            pygame.Rect((self.matrix_left_top[0] + j * self.m.mino_dim,
+                                         self.matrix_left_top[1] - (2 - i) * self.m.mino_dim),
+                                        (self.m.mino_dim, self.m.mino_dim))
+                        )
 
-        # draw the actual matrix area:
-        for i in range(20):
-            for j in range(10):
-                if self.m.matrix[i + 2, j] != 0:
-                    pygame.draw.rect(
-                        self.screen,
-                        self.m.index2rgb[self.m.matrix[i + 2, j]],
-                        pygame.Rect((self.matrix_left_top[0] + j * self.m.mino_dim,
-                                     self.matrix_left_top[1] + i * self.m.mino_dim),
-                                    (self.m.mino_dim, self.m.mino_dim))
-                    )
+            # draw the actual matrix area:
+            for i in range(20):
+                for j in range(10):
+                    if self.m.matrix[i + 2, j] != 0:
+                        pygame.draw.rect(
+                            self.screen,
+                            self.m.index2rgb[self.m.matrix[i + 2, j]],
+                            pygame.Rect((self.matrix_left_top[0] + j * self.m.mino_dim,
+                                         self.matrix_left_top[1] + i * self.m.mino_dim),
+                                        (self.m.mino_dim, self.m.mino_dim))
+                        )
+        else:
+            res = []
+            for i in range(20): # (TODO) this might be too slow for a gym-api, try vectorizing later
+                line = []
+                for j in range(10):
+                    line.append(self.m.index2rgb[self.m.matrix[i+2, j]])
+                res.append(line)
+            return np.array(res)
 
     def drawQueue(self, length=5):  # max queue length of 5
         if length > 5:
@@ -263,7 +282,7 @@ class GameUI:
         if self.m.prev_clear_text != [''] and self.m.prev_clear_text != self.track_clear_text:
             self.track_clear_text = self.m.prev_clear_text
             self.clear_text.clear()
-            self.clear_flag = pygame.time.get_ticks()
+            self.clear_flag = self.getTick()
             for i in range(len(self.m.prev_clear_text)):
                 if self.m.prev_clear_text[i].find("PERFECT CLEAR") != -1:
                     self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.yellow, 
@@ -284,7 +303,7 @@ class GameUI:
                 msg.draw(self.screen)
         else:
             if self.clear_flag is not None:
-                if pygame.time.get_ticks() - self.clear_flag <= 2000:  # show for 2 seconds max
+                if self.getTick() - self.clear_flag <= 2000:  # show for 2 seconds max
                     for msg in self.clear_text:
                         msg.draw(self.screen)
                 else:
@@ -294,7 +313,7 @@ class GameUI:
 
     def getZoneTimer(self):
         if self.m.zone_state:
-            current_tick = pygame.time.get_ticks()
+            current_tick = self.getTick()
             if self.m.current_zone == 0:
                 self.m.leaveZone()
                 self.start_zone_tick = None
@@ -308,7 +327,7 @@ class GameUI:
         return str(self.m.getLines())
 
     def getTimer(self):  # time elapsed
-        time_passed = pygame.time.get_ticks() - self.game_start_tick
+        time_passed = self.getTick() - self.game_start_tick
         hours = time_passed // 1000 // 60 // 60
         minutes = time_passed // 1000 // 60 % 60
         seconds = time_passed // 1000 % 60
@@ -320,6 +339,18 @@ class GameUI:
 
     def getScore(self):  # current score
         return str(self.m.getScore())
+    
+    def getTick(self):
+        if self.use_graphics:
+            return pygame.time.get_ticks()
+        else:
+            return self.ticks
+
+    def getLockDelay(self):
+        if self.use_graphics:
+            return self.lock_delay
+        else:
+            return self.its_for_lock
 
     def getFixedInput(self, key_event, key_press):  # for single actions (hard drop, rotations, swap hold)
 
@@ -332,15 +363,15 @@ class GameUI:
                 elif config.key2action[key_press] == "ROTATE_CW":
                     self.m.rotateCW()
                     print("ROTATE_CW")
-                    self.getMoveStatus(tick=pygame.time.get_ticks())
+                    self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "ROTATE_CCW":
                     self.m.rotateCCW()
                     print("ROTATE_CCW")
-                    self.getMoveStatus(tick=pygame.time.get_ticks())
+                    self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "ROTATE_180":
                     self.m.rotate180()
                     print("ROTATE_180")
-                    self.getMoveStatus(tick=pygame.time.get_ticks())
+                    self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "SWAP_HOLD":
                     # note: remember to implement way to stop swap_hold being executed consecutively
                     self.m.swapHold()
@@ -350,7 +381,7 @@ class GameUI:
                     print("SHIFT_LEFT")
                     self.shift_once = True
                     self.das_direction = "LEFT"
-                    self.left_das_tick = pygame.time.get_ticks()
+                    self.left_das_tick = self.getTick()
                     self.right_arr_tick = None
                     if self.cancel_das:
                         self.right_das_tick = None
@@ -361,7 +392,7 @@ class GameUI:
                     print("SHIFT_RIGHT")
                     self.shift_once = True
                     self.das_direction = "RIGHT"
-                    self.right_das_tick = pygame.time.get_ticks()
+                    self.right_das_tick = self.getTick()
                     self.left_arr_tick = None
                     if self.cancel_das:
                         self.left_das_tick = None
@@ -370,7 +401,7 @@ class GameUI:
                             self.right_das_tick = self.left_das_tick
                 elif config.key2action[key_press] == "SOFT_DROP":
                     print("SOFT_DROP")
-                    self.soft_drop_tick = pygame.time.get_ticks()
+                    self.soft_drop_tick = self.getTick()
                 elif config.key2action[key_press] == "RESET":
                     print("RESET")
                     self.m.resetMatrix()
@@ -378,9 +409,9 @@ class GameUI:
                     self.game_start_tick = pygame.time.get_ticks()
                 elif config.key2action[key_press] == "ACTIVATE_ZONE":
                     print("ACTIVATE_ZONE")
-                    if self.m.zoneReady() and self.start_zone_tick==None:
+                    if self.m.zoneReady() and self.start_zone_tick is None:
                         self.m.activateZone()
-                        self.start_zone_tick = pygame.time.get_ticks()
+                        self.start_zone_tick = self.getTick()
 
         elif key_event == pygame.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:
@@ -396,7 +427,7 @@ class GameUI:
     def getContinuousInput(self):  # for continuous actions (shift left, shift right, soft drop)
         keys = pygame.key.get_pressed()
 
-        current_tick = pygame.time.get_ticks()
+        current_tick = self.getTick()
 
         if not keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]:  # reset direction
             self.das_direction = None
@@ -480,9 +511,9 @@ class GameUI:
                     else -> turn on enforce_lock_delay
                         if move_reset equals move counter -> freeze tetromino
         """
-        current_tick = pygame.time.get_ticks()
-        if self.enforce_auto_lock and self.m.touchedStack() and self.prev_move_tick != None:
-            if current_tick - self.prev_move_tick >= self.lock_delay:
+        current_tick = self.getTick()
+        if self.enforce_auto_lock and self.m.touchedStack() and self.prev_move_tick is not None:
+            if current_tick - self.prev_move_tick >= self.getLockDelay():
                 self.m.freezeTetromino()
                 self.getMoveStatus(True)
             else:
@@ -498,8 +529,8 @@ class GameUI:
 
     def run(self):
         self.m.addTetromino()
-        self.game_start_tick = pygame.time.get_ticks()
-        start_tick = pygame.time.get_ticks()
+        self.game_start_tick = self.getTick()
+        start_tick = self.getTick()
 
         while True:
             for event in pygame.event.get():
@@ -521,9 +552,58 @@ class GameUI:
             self.drawZoneMeter()
             pygame.display.flip()
 
-            end_tick = pygame.time.get_ticks()
+            end_tick = self.getTick()
             if (end_tick - start_tick) >= 1000 // self.gravity:
                 start_tick = end_tick
                 self.m.enforceGravity()
                 self.getMoveStatus(tick=end_tick)
                 # print(m.matrix)
+
+    """Gym-like api. Need to have graphics_mode=False to use properly"""
+    def reset(self):
+        self.score, self.ticks, self.phase = 0, 0, 0
+        self.m.resetMatrix()
+        self.m.addTetromino()
+        return self.drawMatrix()
+
+    def get_obs(self, done=False):
+        sc = self.score
+        self.score = self.m.getLines()
+        return (
+            self.drawMatrix(),
+            self.score - sc if not done else -1,
+            done,
+            ''
+        )
+
+    def step(self, action):
+        if action == 0:  # NO-OP
+            pass
+        elif action == 1:  # HARD-DROP
+            self.getFixedInput(pygame.KEYDOWN, pygame.K_SPACE)
+            self.phase = 0
+        elif action == 2:  # ROTATE_CW
+            self.getFixedInput(pygame.KEYDOWN, pygame.K_UP)
+        elif action == 3:  # ROTATE_CCW
+            self.getFixedInput(pygame.KEYDOWN, pygame.K_z)
+        elif action == 4:  # SHIFT_LEFT
+            self.getFixedInput(pygame.KEYDOWN, pygame.K_LEFT)
+            self.getFixedInput(pygame.KEYUP, pygame.K_LEFT)
+        elif action == 5:  # SHIFT_RIGHT
+            self.getFixedInput(pygame.KEYDOWN, pygame.K_RIGHT)
+            self.getFixedInput(pygame.KEYUP, pygame.K_RIGHT)
+        elif action == 6:  # SOFT_DROP
+            self.getFixedInput(pygame.KEYDOWN, pygame.K_DOWN)
+            self.getFixedInput(pygame.KEYUP, pygame.K_DOWN)
+
+        if self.m.game_over:
+            return self.get_obs(True)
+        self.advancePhase()
+        return self.get_obs(self.m.game_over)
+
+    def advancePhase(self):
+        self.phase += 1
+        self.ticks += 1
+        while self.phase >= self.its_per_tick:  # handles fractional values
+            self.m.enforceGravity()
+            self.phase -= self.its_per_tick
