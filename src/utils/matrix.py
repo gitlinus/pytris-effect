@@ -36,7 +36,7 @@ class Matrix:
 		'Z':[(0,3),(0,4),(1,4),(1,5)]
 	}
 
-	def __init__(self, mino_dim=30):
+	def __init__(self, mino_dim=30, game_mode="ZEN"):
 		self.mino_dim = mino_dim # dimensions in number of pixels (only used for GUI)
 		self.width = mino_dim * 10 # dimensions in number of pixels (only used for GUI)
 		self.height = mino_dim * 20 # dimensions in number of pixels (only used for GUI)
@@ -58,6 +58,30 @@ class Matrix:
 		self.full_zone = 40
 		self.zone_state = False
 		self.game_over = False
+		self.game_mode = game_mode
+		self.objective = None
+		self.setup()
+
+	def setup(self):
+		if self.game_mode == "ZEN":
+			self.objective = None
+		elif self.game_mode == "SPRINT":
+			self.objective = 40
+		elif self.game_mode == "JOURNEY":
+			self.objective = 150
+			self.level = 1
+		else:
+			raise Exception("Unknown Game Mode")
+
+	def gameOverProcess(self):
+		if self.game_over:
+			if self.game_mode == "ZEN":
+				self.resetMatrix(False,False)
+				self.addTetromino()
+			elif self.game_mode == "SPRINT":
+				pass
+			elif self.game_mode == "JOURNEY":
+				pass
 
 	def dim(self):
 		return self.width, self.height
@@ -117,6 +141,7 @@ class Matrix:
 				if self.matrix[i[0],i[1]] != 0:
 					# print("Topped out", file=sys.stderr)
 					self.game_over = True
+					self.gameOverProcess()
 					return
 					# raise Exception("Topped out")
 
@@ -155,6 +180,7 @@ class Matrix:
 			for i in self.mino_locations: 
 				if self.matrix[i[0],i[1]] != 0:
 					self.game_over = True
+					self.gameOverProcess()
 					return
 					# raise Exception("Topped out")
 		else:
@@ -307,7 +333,7 @@ class Matrix:
 			temp1 = self.lines_cleared
 		if not clear_score:
 			temp2 = self.score
-		self.__init__()
+		self.__init__(game_mode=self.game_mode)
 		self.lines_cleared = temp1
 		self.score = temp2
 		

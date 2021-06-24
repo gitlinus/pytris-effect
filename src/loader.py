@@ -1,6 +1,7 @@
 import sys
 import pygame 
 import pyautogui
+from . import gameui
 #Loading scenes
 
 class Label:
@@ -113,7 +114,8 @@ class Loader():
 		elif self.sprint in self.buttonList and self.sprint.isOver(pygame.mouse.get_pos()):
 			print("Coming soon")
 		elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
-			print("Coming soon")
+			game = gameui.GameUI(True,"ZEN")
+			game.run()
 		
 	def run(self):
 		while True:

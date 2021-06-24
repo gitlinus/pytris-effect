@@ -29,6 +29,7 @@ class GameUI:
 
     def __init__(self,
                  graphic_mode=True,
+                 game_mode="ZEN",
                  **kwargs):
 
         self.gravity = 1  # number of blocks per second at which the tetromino falls
@@ -67,7 +68,7 @@ class GameUI:
             pygame.init()
 
             self.screen_width, self.screen_height = pyautogui.size()
-            self.m = matrix.Matrix(2 * self.screen_height // 60)  # matrix height should be roughly 2/3 of screen height
+            self.m = matrix.Matrix(2 * self.screen_height // 60,game_mode)  # matrix height should be roughly 2/3 of screen height
             self.vertical_offset = 50
             self.offset = 50
             self.screen_size = self.screen_width, self.screen_height - self.vertical_offset
@@ -406,10 +407,11 @@ class GameUI:
                     print("RESET")
                     self.m.resetMatrix()
                     self.m.addTetromino()
-                    self.game_start_tick = pygame.time.get_ticks()
+                    if not self.m.game_mode == "ZEN":
+                        self.game_start_tick = self.getTick()
                 elif config.key2action[key_press] == "ACTIVATE_ZONE":
                     print("ACTIVATE_ZONE")
-                    if self.m.zoneReady() and self.start_zone_tick is None:
+                    if self.m.zoneReady():
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()
 
