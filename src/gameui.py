@@ -5,6 +5,7 @@ import time
 import numpy as np
 import math
 from .utils import matrix, config
+from . import loader
 
 
 # text labels beside matrix
@@ -48,6 +49,7 @@ class GameUI:
 
         self.game_start_tick = None
         self.start_zone_tick = None
+        self.sprint_time = None
 
         self.ghostPiece = True
         self.showGrid = True
@@ -332,10 +334,15 @@ class GameUI:
         hours = time_passed // 1000 // 60 // 60
         minutes = time_passed // 1000 // 60 % 60
         seconds = time_passed // 1000 % 60
+        milles = time_passed % 1000
         time_str = ""
         time_str += str(hours) + ":" if hours != 0 else ""
         time_str += str(minutes) + ":" if minutes >= 10 else "0" + str(minutes) + ":"
         time_str += str(seconds) if seconds >= 10 else "0" + str(seconds)
+        if self.m.game_mode == "SPRINT":
+            time_str += "." + str(milles)
+            if self.m.objective_met:
+                self.sprint_time = time_str
         return time_str
 
     def getScore(self):  # current score
@@ -374,7 +381,6 @@ class GameUI:
                     print("ROTATE_180")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "SWAP_HOLD":
-                    # note: remember to implement way to stop swap_hold being executed consecutively
                     self.m.swapHold()
                     print("SWAP_HOLD")
                     self.getMoveStatus(True)
@@ -414,6 +420,9 @@ class GameUI:
                     if self.m.zoneReady():
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()
+                elif config.key2action[key_press] == "PAUSE":
+                    print("PAUSE")
+                    loader.Loader(scene="PAUSE").run()
 
         elif key_event == pygame.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:
@@ -534,7 +543,7 @@ class GameUI:
         self.game_start_tick = self.getTick()
         start_tick = self.getTick()
 
-        while True:
+        while True and not (self.m.game_over or self.m.objective_met):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     sys.exit()
@@ -560,6 +569,16 @@ class GameUI:
                 self.m.enforceGravity()
                 self.getMoveStatus(tick=end_tick)
                 # print(m.matrix)
+
+        if self.m.game_over:
+            loader.Loader(scene="GAME OVER",game_mode=self.m.game_mode).run()
+        elif self.m.objective_met:
+            objective = ""
+            if self.m.game_mode == "SPRINT":
+                objective = self.sprint_time
+            elif self.m.game_mode == "JOURNEY":
+                objective = self.m.score
+            loader.Loader(scene="END SCREEN",game_mode=self.m.game_mode,objective=objective).run()
 
     """Gym-like api. Need to have graphics_mode=False to use properly"""
     def reset(self):

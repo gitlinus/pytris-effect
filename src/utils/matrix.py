@@ -60,6 +60,7 @@ class Matrix:
 		self.game_over = False
 		self.game_mode = game_mode
 		self.objective = None
+		self.objective_met = None
 		self.setup()
 
 	def setup(self):
@@ -279,6 +280,9 @@ class Matrix:
 			res.insert(0,np.zeros(self.matrix.shape[1]))
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
+		if self.objective is not None:
+			if self.lines_cleared >= self.objective:
+				self.objective_met = True
 		self.current_zone = min(self.current_zone+cnt,self.full_zone)
 		self.combo = self.combo+1 if cnt > 0 else 0
 		self.score += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0

@@ -3,7 +3,7 @@ import pygame
 # possible actions
 actions = ["ROTATE_CW", "ROTATE_CCW", "ROTATE_180", "SHIFT_LEFT", 
 			"SHIFT_RIGHT", "SOFT_DROP", "HARD_DROP", "SWAP_HOLD", 
-			"RESET", "ACTIVATE_ZONE"]
+			"RESET", "ACTIVATE_ZONE", "PAUSE"]
 
 # default control mappping
 key2action = { 
@@ -16,13 +16,14 @@ key2action = {
 	pygame.K_SPACE:"HARD_DROP",
 	pygame.K_LSHIFT:"SWAP_HOLD",
 	pygame.K_r:"RESET",
-	pygame.K_c:"ACTIVATE_ZONE"
+	pygame.K_c:"ACTIVATE_ZONE",
+	pygame.K_p:"PAUSE"
 }
 
 action2key = {
 	"ROTATE_CW":None, "ROTATE_CCW":None, "ROTATE_180":None, "SHIFT_LEFT":None, 
 	"SHIFT_RIGHT":None, "SOFT_DROP":None, "HARD_DROP":None, "SWAP_HOLD":None,
-	"RESET":None, "ACTIVATE_ZONE":None
+	"RESET":None, "ACTIVATE_ZONE":None, "PAUSE":None
 }
 
 def getKeyAssignments(): # reverse of key2action 

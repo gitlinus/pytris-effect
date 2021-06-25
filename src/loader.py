@@ -42,7 +42,7 @@ class Loader():
 	BLACK = 0,0,0
 	GREY = 128,128,128
 	
-	def __init__(self):
+	def __init__(self, scene="TITLE", game_mode=None, objective=None):
 		pygame.init()
 		self.screen_width, self.screen_height = pyautogui.size()
 		self.vertical_offset = 50
@@ -66,9 +66,30 @@ class Loader():
 		self.zen = None
 		self.goback = None
 
-		self.buttonList = None
+		# pause screen buttons
+		self.resume = None
+		self.gohome = None
 
-		self.titleScreen()
+		# start over screen
+		self.restart = None
+		self.game_mode = game_mode
+
+		# end screen
+		self.objective = objective
+
+		self.buttonList = None
+		self.exit_loop = False
+
+		if scene == "TITLE":
+			self.titleScreen()
+		elif scene == "GAME SELECTION":
+			self.gameSelectionScreen()
+		elif scene == "PAUSE":
+			self.pauseScreen()
+		elif scene == "GAME OVER":
+			self.gameOverScreen()
+		elif scene == "END SCREEN":
+			self.endScreen()
 	
 	def titleScreen(self):
 		self.title = Label(self.title_font, "PYTRIS", self.BLUE, (self.screen_width/2, self.screen_height/3), "center")
@@ -100,25 +121,72 @@ class Loader():
 									self.button_width/2,self.button_height,self.button_font,self.WHITE,"BACK")
 		self.buttonList = [self.journey, self.sprint, self.zen, self.goback]
 
+	def pauseScreen(self):
+		self.title = Label(self.title_font, "PAUSED", self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
+		self.button_width = self.title.rect.width
+		self.button_height = self.title.rect.height
+		self.resume = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*0.5+self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"RESUME")
+		self.settings = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"SETTINGS")
+		self.gohome = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*2.5+3*self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"HOME")
+		self.buttonList = [self.resume, self.settings, self.gohome]
+
+	def gameOverScreen(self):
+		self.title = Label(self.title_font, "GAME OVER", self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
+		self.button_width = self.title.rect.width
+		self.button_height = self.title.rect.height
+		self.restart = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*0.5+self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"RESTART")
+		self.gohome = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"HOME")
+		self.buttonList = [self.restart, self.gohome]
+
+	def endScreen(self):
+		self.title = Label(self.title_font, self.objective, self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
+		self.button_width = self.title.rect.width
+		self.button_height = self.title.rect.height
+		self.restart = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*0.5+self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"RESTART")
+		self.gohome = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"HOME")
+		self.buttonList = [self.restart, self.gohome]
+
 	def handle_event(self, event):
-		if self.play in self.buttonList and self.play.isOver(pygame.mouse.get_pos()):
-			self.buttonList.clear()
-			self.gameSelectionScreen()
-		elif self.settings in self.buttonList and self.settings.isOver(pygame.mouse.get_pos()):
-			print("Coming soon")
-		elif self.goback in self.buttonList and self.goback.isOver(pygame.mouse.get_pos()):
-			self.buttonList.clear()
-			self.titleScreen()
-		elif self.journey in self.buttonList and self.journey.isOver(pygame.mouse.get_pos()):
-			print("Coming soon")
-		elif self.sprint in self.buttonList and self.sprint.isOver(pygame.mouse.get_pos()):
-			print("Coming soon")
-		elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
-			game = gameui.GameUI(True,"ZEN")
-			game.run()
+		if event.type == pygame.MOUSEBUTTONDOWN:
+			if self.play in self.buttonList and self.play.isOver(pygame.mouse.get_pos()):
+				self.buttonList.clear()
+				self.gameSelectionScreen()
+			elif self.settings in self.buttonList and self.settings.isOver(pygame.mouse.get_pos()):
+				print("Coming soon")
+			elif self.goback in self.buttonList and self.goback.isOver(pygame.mouse.get_pos()):
+				self.buttonList.clear()
+				self.titleScreen()
+			elif self.journey in self.buttonList and self.journey.isOver(pygame.mouse.get_pos()):
+				print("Coming soon")
+			elif self.sprint in self.buttonList and self.sprint.isOver(pygame.mouse.get_pos()):
+				gameui.GameUI(True,"SPRINT").run()
+			elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
+				gameui.GameUI(True,"ZEN").run()
+			elif self.gohome in self.buttonList and self.gohome.isOver(pygame.mouse.get_pos()):
+				self.buttonList.clear()
+				self.titleScreen()
+			elif self.resume in self.buttonList and self.resume.isOver(pygame.mouse.get_pos()):
+				self.buttonList.clear()
+				self.exit_loop = True
+			elif self.restart in self.buttonList and self.restart.isOver(pygame.mouse.get_pos()):
+				gameui.GameUI(True,self.game_mode).run()
 		
 	def run(self):
-		while True:
+		while True and not self.exit_loop:
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
 					sys.exit()
