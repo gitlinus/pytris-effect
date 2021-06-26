@@ -45,4 +45,7 @@ def deleteControl(key):
 		return True
 	return False
 
+def key2str(key):
+	return pygame.key.name(key)
+
 getKeyAssignments()

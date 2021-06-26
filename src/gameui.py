@@ -422,7 +422,7 @@ class GameUI:
                         self.start_zone_tick = self.getTick()
                 elif config.key2action[key_press] == "PAUSE":
                     print("PAUSE")
-                    loader.Loader(scene="PAUSE").run()
+                    loader.Loader(scene="PAUSE",prev="PAUSE").run()
 
         elif key_event == pygame.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:

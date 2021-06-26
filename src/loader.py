@@ -2,7 +2,144 @@ import sys
 import pygame 
 import pyautogui
 from . import gameui
+from .utils import config
 #Loading scenes
+
+keyList = [
+pygame.K_BACKSPACE,
+pygame.K_TAB,
+pygame.K_CLEAR,
+pygame.K_RETURN,
+pygame.K_PAUSE,
+pygame.K_ESCAPE,
+pygame.K_SPACE,
+pygame.K_EXCLAIM,
+pygame.K_QUOTEDBL,
+pygame.K_HASH,
+pygame.K_DOLLAR,
+pygame.K_AMPERSAND,
+pygame.K_QUOTE,
+pygame.K_LEFTPAREN,
+pygame.K_RIGHTPAREN,
+pygame.K_ASTERISK,
+pygame.K_PLUS,
+pygame.K_COMMA,
+pygame.K_MINUS,
+pygame.K_PERIOD,
+pygame.K_SLASH,
+pygame.K_0,
+pygame.K_1,
+pygame.K_2,
+pygame.K_3,
+pygame.K_4,
+pygame.K_5,
+pygame.K_6,
+pygame.K_7,
+pygame.K_8,
+pygame.K_9,
+pygame.K_COLON,
+pygame.K_SEMICOLON,
+pygame.K_LESS,
+pygame.K_EQUALS,
+pygame.K_GREATER,
+pygame.K_QUESTION,
+pygame.K_AT,
+pygame.K_LEFTBRACKET,
+pygame.K_BACKSLASH,
+pygame.K_RIGHTBRACKET,
+pygame.K_CARET,
+pygame.K_UNDERSCORE,
+pygame.K_BACKQUOTE,
+pygame.K_a,
+pygame.K_b,
+pygame.K_c,
+pygame.K_d,
+pygame.K_e,
+pygame.K_f,
+pygame.K_g,
+pygame.K_h,
+pygame.K_i,
+pygame.K_j,
+pygame.K_k,
+pygame.K_l,
+pygame.K_m,
+pygame.K_n,
+pygame.K_o,
+pygame.K_p,
+pygame.K_q,
+pygame.K_r,
+pygame.K_s,
+pygame.K_t,
+pygame.K_u,
+pygame.K_v,
+pygame.K_w,
+pygame.K_x,
+pygame.K_y,
+pygame.K_z,
+pygame.K_DELETE,
+pygame.K_KP0,
+pygame.K_KP1,
+pygame.K_KP2,
+pygame.K_KP3,
+pygame.K_KP4,
+pygame.K_KP5,
+pygame.K_KP6,
+pygame.K_KP7,
+pygame.K_KP8,
+pygame.K_KP9,
+pygame.K_KP_PERIOD,
+pygame.K_KP_DIVIDE,
+pygame.K_KP_MULTIPLY,
+pygame.K_KP_MINUS,
+pygame.K_KP_PLUS,
+pygame.K_KP_ENTER,
+pygame.K_KP_EQUALS,
+pygame.K_UP,
+pygame.K_DOWN,
+pygame.K_RIGHT,
+pygame.K_LEFT,
+pygame.K_INSERT,
+pygame.K_HOME,
+pygame.K_END,
+pygame.K_PAGEUP,
+pygame.K_PAGEDOWN,
+pygame.K_F1,
+pygame.K_F2,
+pygame.K_F3,
+pygame.K_F4,
+pygame.K_F5,
+pygame.K_F6,
+pygame.K_F7,
+pygame.K_F8,
+pygame.K_F9,
+pygame.K_F10,
+pygame.K_F11,
+pygame.K_F12,
+pygame.K_F13,
+pygame.K_F14,
+pygame.K_F15,
+pygame.K_NUMLOCK,
+pygame.K_CAPSLOCK,
+pygame.K_SCROLLOCK,
+pygame.K_RSHIFT,
+pygame.K_LSHIFT,
+pygame.K_RCTRL,
+pygame.K_LCTRL,
+pygame.K_RALT,
+pygame.K_LALT,
+pygame.K_RMETA,
+pygame.K_LMETA,
+pygame.K_LSUPER,
+pygame.K_RSUPER,
+pygame.K_MODE,
+pygame.K_HELP,
+pygame.K_PRINT,
+pygame.K_SYSREQ,
+pygame.K_BREAK,
+pygame.K_MENU,
+pygame.K_POWER,
+pygame.K_EURO
+]
 
 class Label:
 	def __init__(self, font, text, colour, position, anchor="topleft"):
@@ -41,8 +178,9 @@ class Loader():
 	WHITE = 255,255,255
 	BLACK = 0,0,0
 	GREY = 128,128,128
+	RED = 255,0,0
 	
-	def __init__(self, scene="TITLE", game_mode=None, objective=None):
+	def __init__(self, scene="TITLE", game_mode=None, objective=None, prev=None):
 		pygame.init()
 		self.screen_width, self.screen_height = pyautogui.size()
 		self.vertical_offset = 50
@@ -77,8 +215,23 @@ class Loader():
 		# end screen
 		self.objective = objective
 
-		self.buttonList = None
+		# settings screen
+		self.rotate_cw = None
+		self.rotate_ccw = None
+		self.rotate_180 = None
+		self.shift_left = None
+		self.shift_right = None
+		self.hard_drop = None
+		self.soft_drop = None
+		self.swap_hold = None
+		self.reset = None
+		self.activate_zone = None
+		self.pause = None
+
+		self.buttonList = []
+		self.labelList = []
 		self.exit_loop = False
+		self.prev_screen = prev
 
 		if scene == "TITLE":
 			self.titleScreen()
@@ -90,6 +243,8 @@ class Loader():
 			self.gameOverScreen()
 		elif scene == "END SCREEN":
 			self.endScreen()
+		elif scene == "SETTINGS":
+			self.settingsScreen()
 	
 	def titleScreen(self):
 		self.title = Label(self.title_font, "PYTRIS", self.BLUE, (self.screen_width/2, self.screen_height/3), "center")
@@ -160,16 +315,95 @@ class Loader():
 									self.button_width,self.button_height,self.button_font,self.WHITE,"HOME")
 		self.buttonList = [self.restart, self.gohome]
 
+	def settingsScreen(self):
+		self.title = Label(self.title_font, "SETTINGS", self.BLUE, (self.screen_width/2, self.screen_height/8), "center")
+		self.button_width = self.title.rect.width
+		self.button_height = self.title.rect.height
+		j=0
+		meow = True
+		for i in config.actions:
+			if meow:
+				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.topleft[0]-1.5*self.button_width, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset)))
+				self.buttonList.append(Button(self.BLACK,self.title.rect.topleft[0]-0.5*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
+				meow = False
+			else:
+				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset)))
+				self.buttonList.append(Button(self.BLACK,self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
+				meow = True
+				j += 1
+			if i=="ROTATE_CW":
+				self.rotate_cw = self.buttonList[-1]
+			elif i=="ROTATE_CCW":
+				self.rotate_ccw = self.buttonList[-1]
+			elif i=="ROTATE_180":
+				self.rotate_180 = self.buttonList[-1]
+			elif i=="SHIFT_LEFT":
+				self.shift_left = self.buttonList[-1]
+			elif i=="SHIFT_RIGHT":
+				self.shift_right = self.buttonList[-1]
+			elif i=="SOFT_DROP":
+				self.soft_drop = self.buttonList[-1]
+			elif i=="HARD_DROP":
+				self.hard_drop = self.buttonList[-1]
+			elif i=="SWAP_HOLD":
+				self.swap_hold = self.buttonList[-1]
+			elif i=="RESET":
+				self.reset = self.buttonList[-1]
+			elif i=="ACTIVATE_ZONE":
+				self.activate_zone = self.buttonList[-1]
+			elif i=="PAUSE":
+				self.pause = self.buttonList[-1]
+
+		self.goback = Button(self.BLACK,self.title.rect.topleft[0]-1.5*self.button_width,
+									self.title.rect.topleft[1],
+									self.button_width/2,self.button_height,self.button_font,self.WHITE,"BACK")
+		self.buttonList.append(self.goback)
+
+	def changeControl(self, button, control):
+		button.button_colour = self.RED
+		self.iter()
+		new_key = self.getKey()
+		while (new_key is None):
+			new_key = self.getKey()
+		config.deleteControl(config.action2key[control])
+		config.addControl(new_key,control)
+		self.buttonList.clear()
+		self.labelList.clear()
+		self.settingsScreen()
+
+	def getKey(self):
+		keys = None
+		done = False
+		while not done:
+			for event in pygame.event.get():
+				if event.type == pygame.QUIT:
+					sys.exit()
+				elif event.type == pygame.KEYDOWN:
+					keys = pygame.key.get_pressed()
+					done = True
+					break
+		for key in keyList:
+			if keys[key] and key not in config.key2action:
+				return key
+		return None
+
 	def handle_event(self, event):
 		if event.type == pygame.MOUSEBUTTONDOWN:
 			if self.play in self.buttonList and self.play.isOver(pygame.mouse.get_pos()):
 				self.buttonList.clear()
+				self.labelList.clear()
 				self.gameSelectionScreen()
 			elif self.settings in self.buttonList and self.settings.isOver(pygame.mouse.get_pos()):
-				print("Coming soon")
+				self.buttonList.clear()
+				self.labelList.clear()
+				self.settingsScreen()
 			elif self.goback in self.buttonList and self.goback.isOver(pygame.mouse.get_pos()):
 				self.buttonList.clear()
-				self.titleScreen()
+				self.labelList.clear()
+				if self.prev_screen is None:
+					self.titleScreen()
+				elif self.prev_screen == "PAUSE":
+					self.pauseScreen()
 			elif self.journey in self.buttonList and self.journey.isOver(pygame.mouse.get_pos()):
 				print("Coming soon")
 			elif self.sprint in self.buttonList and self.sprint.isOver(pygame.mouse.get_pos()):
@@ -178,13 +412,49 @@ class Loader():
 				gameui.GameUI(True,"ZEN").run()
 			elif self.gohome in self.buttonList and self.gohome.isOver(pygame.mouse.get_pos()):
 				self.buttonList.clear()
+				self.labelList.clear()
 				self.titleScreen()
 			elif self.resume in self.buttonList and self.resume.isOver(pygame.mouse.get_pos()):
 				self.buttonList.clear()
+				self.labelList.clear()
 				self.exit_loop = True
 			elif self.restart in self.buttonList and self.restart.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,self.game_mode).run()
+			elif self.rotate_cw in self.buttonList and self.rotate_cw.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.rotate_cw,"ROTATE_CW")
+			elif self.rotate_ccw in self.buttonList and self.rotate_ccw.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.rotate_ccw,"ROTATE_CCW")
+			elif self.rotate_180 in self.buttonList and self.rotate_180.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.rotate_180,"ROTATE_180")
+			elif self.shift_left in self.buttonList and self.shift_left.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.shift_left,"SHIFT_LEFT")
+			elif self.shift_right in self.buttonList and self.shift_right.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.shift_right,"SHIFT_RIGHT")
+			elif self.soft_drop in self.buttonList and self.soft_drop.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.soft_drop,"SOFT_DROP")
+			elif self.hard_drop in self.buttonList and self.hard_drop.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.hard_drop,"HARD_DROP")
+			elif self.swap_hold in self.buttonList and self.swap_hold.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.swap_hold,"SWAP_HOLD")
+			elif self.reset in self.buttonList and self.reset.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.reset,"RESET")
+			elif self.activate_zone in self.buttonList and self.activate_zone.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.activate_zone,"ACTIVATE_ZONE")
+			elif self.pause in self.buttonList and self.pause.isOver(pygame.mouse.get_pos()):
+				self.changeControl(self.pause,"PAUSE")
+
+	def iter(self): #run but one frame only
+		self.screen.fill(self.BG_COLOR)
+		self.title.draw(self.screen)
+
+		for label in self.labelList:
+			label.draw(self.screen)
+
+		for button in self.buttonList:
+			button.draw(self.screen,self.WHITE)
 		
+		pygame.display.flip()
+	
 	def run(self):
 		while True and not self.exit_loop:
 			for event in pygame.event.get():
@@ -195,6 +465,9 @@ class Loader():
 
 			self.screen.fill(self.BG_COLOR)
 			self.title.draw(self.screen)
+
+			for label in self.labelList:
+				label.draw(self.screen)
 
 			for button in self.buttonList:
 				if button.isOver(pygame.mouse.get_pos()):
