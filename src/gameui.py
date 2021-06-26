@@ -4,7 +4,6 @@ import time
 import numpy as np
 import math
 from .utils import matrix, config
-from . import loader
 
 
 # text labels beside matrix
@@ -66,7 +65,9 @@ class GameUI:
 
         self.use_graphics = graphic_mode
         if self.use_graphics:
+            
             import pyautogui
+            from . import loader
             pygame.init()
 
             self.screen_width, self.screen_height = pyautogui.size()
