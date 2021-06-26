@@ -1,6 +1,5 @@
 import sys
 import pygame
-import pyautogui
 import time
 import numpy as np
 import math
@@ -67,6 +66,7 @@ class GameUI:
 
         self.use_graphics = graphic_mode
         if self.use_graphics:
+            import pyautogui
             pygame.init()
 
             self.screen_width, self.screen_height = pyautogui.size()
