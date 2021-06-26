@@ -113,6 +113,8 @@ class GameUI:
             self.phase = 0
             self.score = 0
             self.ticks = 0
+            colour_map = lambda x: self.m.index2rgb[x]
+            self.vec_map = np.vectorize(colour_map)
 
     def drawMatrix(self):
         """When using graphics, draw the board. When using api, return the board"""
@@ -143,13 +145,9 @@ class GameUI:
                                         (self.m.mino_dim, self.m.mino_dim))
                         )
         else:
-            res = []
-            for i in range(20): # (TODO) this might be too slow for a gym-api, try vectorizing later
-                line = []
-                for j in range(10):
-                    line.append(self.m.index2rgb[self.m.matrix[i+2, j]])
-                res.append(line)
-            return np.array(res)
+            visible = self.m.matrix[2:,:]
+            visible = self.vec_map(visible)
+            return np.moveaxis(visible, 0, -1)
 
     def drawQueue(self, length=5):  # max queue length of 5
         if length > 5:
@@ -362,6 +360,7 @@ class GameUI:
 
     def getFixedInput(self, key_event, key_press):  # for single actions (hard drop, rotations, swap hold)
 
+        # no das when using env-mode
         if key_event == pygame.KEYDOWN:
             if key_press in config.key2action:
                 if config.key2action[key_press] == "HARD_DROP":
@@ -386,29 +385,40 @@ class GameUI:
                     self.getMoveStatus(True)
                 elif config.key2action[key_press] == "SHIFT_LEFT":
                     print("SHIFT_LEFT")
-                    self.shift_once = True
-                    self.das_direction = "LEFT"
-                    self.left_das_tick = self.getTick()
-                    self.right_arr_tick = None
-                    if self.cancel_das:
-                        self.right_das_tick = None
+                    if self.use_graphics:
+                        self.shift_once = True
+                        self.das_direction = "LEFT"
+                        self.left_das_tick = self.getTick()
+                        self.right_arr_tick = None
+                        if self.cancel_das:
+                            self.right_das_tick = None
+                        else:
+                            if self.right_das_tick is not None:
+                                self.left_das_tick = self.right_das_tick
                     else:
-                        if self.right_das_tick is not None:
-                            self.left_das_tick = self.right_das_tick
+                        self.m.shiftLeft()
+                        self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "SHIFT_RIGHT":
                     print("SHIFT_RIGHT")
-                    self.shift_once = True
-                    self.das_direction = "RIGHT"
-                    self.right_das_tick = self.getTick()
-                    self.left_arr_tick = None
-                    if self.cancel_das:
-                        self.left_das_tick = None
+                    if self.use_graphics:
+                        self.shift_once = True
+                        self.das_direction = "RIGHT"
+                        self.right_das_tick = self.getTick()
+                        self.left_arr_tick = None
+                        if self.cancel_das:
+                            self.left_das_tick = None
+                        else:
+                            if self.left_das_tick is not None:
+                                self.right_das_tick = self.left_das_tick
                     else:
-                        if self.left_das_tick is not None:
-                            self.right_das_tick = self.left_das_tick
+                        self.m.shiftRight()
+                        self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "SOFT_DROP":
                     print("SOFT_DROP")
                     self.soft_drop_tick = self.getTick()
+                    if not self.use_graphics:
+                        self.m.softDrop()
+                        self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == "RESET":
                     print("RESET")
                     self.m.resetMatrix()
@@ -495,7 +505,7 @@ class GameUI:
         if self.enforce_auto_lock:
             if reset:
                 self.visited.fill(0)  # reset visited array
-                self.prev_move_tick = None
+                self.prev_move_tick = None if self.use_graphics else self.getTick()
                 self.enforce_lock_delay = False
                 self.move_cnt = 0
             else:
@@ -523,6 +533,9 @@ class GameUI:
                         if move_reset equals move counter -> freeze tetromino
         """
         current_tick = self.getTick()
+        #print("{} {} {}".format(current_tick, self.prev_move_tick, self.getLockDelay()), file=sys.stderr)
+        #print(self.m.mino_locations, file=sys.stderr)
+        #print(self.m.touchedStack(), file=sys.stderr)
         if self.enforce_auto_lock and self.m.touchedStack() and self.prev_move_tick is not None:
             if current_tick - self.prev_move_tick >= self.getLockDelay():
                 self.m.freezeTetromino()
@@ -592,7 +605,7 @@ class GameUI:
         self.score = self.m.getLines()
         return (
             self.drawMatrix(),
-            self.score - sc if not done else -1,
+            self.score - sc - 0.001 if not done else -0.001 * (500-self.ticks),
             done,
             ''
         )
@@ -625,6 +638,18 @@ class GameUI:
     def advancePhase(self):
         self.phase += 1
         self.ticks += 1
+        self.enforceAutoLock()
         while self.phase >= self.its_per_tick:  # handles fractional values
             self.m.enforceGravity()
             self.phase -= self.its_per_tick
+
+    def render(self):
+        # for rendering
+        from PIL import Image
+        from IPython import display
+        display.clear_output(wait=True)
+        board = self.drawMatrix()
+        scale = 20
+        board = np.repeat(board, scale, axis=0)
+        board = np.repeat(board, scale, axis=1)
+        display.display(Image.fromarray(board.astype(np.uint8)))
