@@ -26,6 +26,13 @@ action2key = {
 	"RESET":None, "ACTIVATE_ZONE":None, "PAUSE":None
 }
 
+das = 100
+arr = 4
+soft_drop_speed = 10
+MAX_ARR = 3000
+MAX_DAS = 3000
+MAX_SOFT_DROP_SPEED = 1000
+
 def getKeyAssignments(): # reverse of key2action 
 	for i in key2action.items():
 		action2key[i[1]] = i[0]

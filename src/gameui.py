@@ -32,9 +32,9 @@ class GameUI:
                  **kwargs):
 
         self.gravity = 1  # number of blocks per second at which the tetromino falls
-        self.das = 100  # (delayed auto-shift) number of milleseconds before arr sets in
-        self.arr = 4  # (auto repeat rate) number of milleseconds in between each time the tetromino is shifted
-        self.soft_drop_speed = 10  # rate (minos per second) at which soft drop makes the tetromino fall
+        self.das = config.das  # (delayed auto-shift) number of milleseconds before arr sets in
+        self.arr = config.arr  # (auto repeat rate) number of milleseconds in between each time the tetromino is shifted
+        self.soft_drop_speed = config.soft_drop_speed  # rate (minos per second) at which soft drop makes the tetromino fall
 
         self.das_direction = None
         self.left_das_tick = None
@@ -67,6 +67,7 @@ class GameUI:
         if self.use_graphics:
             
             import pyautogui
+            global loader
             from . import loader
             pygame.init()
 
@@ -434,6 +435,7 @@ class GameUI:
                 elif config.key2action[key_press] == "PAUSE":
                     print("PAUSE")
                     loader.Loader(scene="PAUSE",prev="PAUSE").run()
+                    self.updateConfig()
 
         elif key_event == pygame.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:
@@ -513,6 +515,11 @@ class GameUI:
                 self.prev_move_tick = tick
                 self.move_cnt += 1 if self.enforce_lock_delay else 0
 
+    def updateConfig(self):
+        self.das = config.das
+        self.arr = config.arr
+        self.soft_drop_speed = config.soft_drop_speed
+    
     def updateVisited(self):
         for i in self.m.mino_locations:
             self.visited[i[0], i[1]] = 1

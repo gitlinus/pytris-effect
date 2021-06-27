@@ -5,6 +5,8 @@ from . import gameui
 from .utils import config
 #Loading scenes
 
+pygame.init()
+
 keyList = [
 pygame.K_BACKSPACE,
 pygame.K_TAB,
@@ -171,6 +173,77 @@ class Button:
 		#pos is the mouse position
 		return pos[0] > self.x and pos[0] < self.x + self.width and pos[1] > self.y and pos[1] < self.y + self.height
 
+class InputBox:
+
+	COLOUR_INACTIVE = 255,255,255
+	COLOUR_ACTIVE = pygame.Color('dodgerblue')
+
+	def __init__(self, x, y, width, height, font_size=32, text='', config_attr=None):
+		self.x = x
+		self.y = y
+		self.width = width
+		self.height = height
+		self.FONT = pygame.font.Font(None, font_size)
+		self.rect = pygame.Rect(x, y, width, height)
+		self.colour = self.COLOUR_INACTIVE
+		self.text = text
+		self.txt_surface = self.FONT.render(text, True, self.colour)
+		self.active = False
+		self.text_rect = self.txt_surface.get_rect()
+		setattr(self.text_rect,"center",(x+width/2,y+height/2))
+		self.config_attr = config_attr
+
+	def handle_event(self, event):
+		if event.type == pygame.MOUSEBUTTONDOWN:
+			# If the user clicked on the input_box rect.
+			if self.rect.collidepoint(event.pos):
+				# Toggle the active variable.
+				self.active = not self.active
+
+			else:
+				self.active = False
+			# Change the current colour of the input box.
+			self.colour = self.COLOUR_ACTIVE if self.active else self.COLOUR_INACTIVE
+			# Re-render the text.
+			self.txt_surface = self.FONT.render(self.text, True, self.colour)
+			self.text_rect = self.txt_surface.get_rect()
+			setattr(self.text_rect,"center",(self.x+self.width/2,self.y+self.height/2))
+			
+		if event.type == pygame.KEYDOWN:
+			if self.active:
+				if event.key == pygame.K_RETURN:
+					if self.config_attr == "DAS":
+						config.das = min(config.MAX_DAS,int(self.text))
+						self.text = str(config.das)
+					elif self.config_attr == "ARR":
+						config.arr = min(config.MAX_ARR,int(self.text))
+						self.text = str(config.arr)
+					elif self.config_attr == "SOFT_DROP_SPEED":
+						config.soft_drop_speed = min(config.MAX_SOFT_DROP_SPEED,int(self.text))
+						self.text = str(config.soft_drop_speed)
+					self.active = False
+					self.colour = self.COLOUR_ACTIVE if self.active else self.COLOUR_INACTIVE
+				elif event.key == pygame.K_BACKSPACE:
+					self.text = self.text[:-1]
+				else:
+					if event.unicode.isnumeric():
+						self.text += event.unicode
+				# Re-render the text.
+				self.txt_surface = self.FONT.render(self.text, True, self.colour)
+				self.text_rect = self.txt_surface.get_rect()
+				setattr(self.text_rect,"center",(self.x+self.width/2,self.y+self.height/2))
+
+	def update(self):
+		# Resize the box if the text is too long.
+		width = max(50, self.txt_surface.get_width()+10)
+		self.rect.w = width
+
+	def draw(self, screen):
+		# Blit the text.
+		screen.blit(self.txt_surface, self.text_rect)
+		# Blit the rect.
+		pygame.draw.rect(screen, self.colour, self.rect, 2)
+
 class Loader():
 
 	BG_COLOR = pygame.Color('gray12')
@@ -181,7 +254,6 @@ class Loader():
 	RED = 255,0,0
 	
 	def __init__(self, scene="TITLE", game_mode=None, objective=None, prev=None):
-		pygame.init()
 		self.screen_width, self.screen_height = pyautogui.size()
 		self.vertical_offset = 50
 		self.screen_size = self.screen_width, self.screen_height - self.vertical_offset
@@ -227,9 +299,13 @@ class Loader():
 		self.reset = None
 		self.activate_zone = None
 		self.pause = None
+		self.das = None
+		self.arr = None
+		self.soft_drop_speed = None
 
 		self.buttonList = []
 		self.labelList = []
+		self.inputBoxList = []
 		self.exit_loop = False
 		self.prev_screen = prev
 
@@ -323,12 +399,12 @@ class Loader():
 		meow = True
 		for i in config.actions:
 			if meow:
-				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.topleft[0]-1.5*self.button_width, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset)))
-				self.buttonList.append(Button(self.BLACK,self.title.rect.topleft[0]-0.5*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
+				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.topleft[0]-1.5*self.button_width, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+				self.buttonList.append(Button(self.BLACK,self.title.rect.topleft[0]-0.5*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
 				meow = False
 			else:
-				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset)))
-				self.buttonList.append(Button(self.BLACK,self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
+				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+				self.buttonList.append(Button(self.BLACK,self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
 				meow = True
 				j += 1
 			if i=="ROTATE_CW":
@@ -359,6 +435,18 @@ class Loader():
 									self.button_width/2,self.button_height,self.button_font,self.WHITE,"BACK")
 		self.buttonList.append(self.goback)
 
+		# das, arr, soft_drop_speed
+		self.labelList.append(Label(self.button_font, "DAS", self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+		self.das = InputBox(self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,font_size=self.screen_width//48,text=str(config.das),config_attr="DAS")
+		self.inputBoxList.append(self.das)
+		j+=1
+		self.labelList.append(Label(self.button_font, "ARR", self.WHITE, (self.title.rect.topleft[0]-1.5*self.button_width, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+		self.arr = InputBox(self.title.rect.topleft[0]-0.5*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,font_size=self.screen_width//48,text=str(config.arr),config_attr="ARR")
+		self.inputBoxList.append(self.arr)
+		self.labelList.append(Label(self.button_font, "SOFT_DROP_VEL", self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+		self.soft_drop_speed = InputBox(self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,font_size=self.screen_width//48,text=str(config.soft_drop_speed),config_attr="SOFT_DROP_SPEED")
+		self.inputBoxList.append(self.soft_drop_speed)
+
 	def changeControl(self, button, control):
 		button.button_colour = self.RED
 		self.iter()
@@ -387,19 +475,23 @@ class Loader():
 				return key
 		return None
 
+	def resetLists(self):
+		self.buttonList.clear()
+		self.labelList.clear()
+		self.inputBoxList.clear()
+
 	def handle_event(self, event):
 		if event.type == pygame.MOUSEBUTTONDOWN:
+			for box in self.inputBoxList:
+				box.handle_event(event)
 			if self.play in self.buttonList and self.play.isOver(pygame.mouse.get_pos()):
-				self.buttonList.clear()
-				self.labelList.clear()
+				self.resetLists()
 				self.gameSelectionScreen()
 			elif self.settings in self.buttonList and self.settings.isOver(pygame.mouse.get_pos()):
-				self.buttonList.clear()
-				self.labelList.clear()
+				self.resetLists()
 				self.settingsScreen()
 			elif self.goback in self.buttonList and self.goback.isOver(pygame.mouse.get_pos()):
-				self.buttonList.clear()
-				self.labelList.clear()
+				self.resetLists()
 				if self.prev_screen is None:
 					self.titleScreen()
 				elif self.prev_screen == "PAUSE":
@@ -411,12 +503,10 @@ class Loader():
 			elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,"ZEN").run()
 			elif self.gohome in self.buttonList and self.gohome.isOver(pygame.mouse.get_pos()):
-				self.buttonList.clear()
-				self.labelList.clear()
+				self.resetLists()
 				self.titleScreen()
 			elif self.resume in self.buttonList and self.resume.isOver(pygame.mouse.get_pos()):
-				self.buttonList.clear()
-				self.labelList.clear()
+				self.resetLists()
 				self.exit_loop = True
 			elif self.restart in self.buttonList and self.restart.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,self.game_mode).run()
@@ -442,6 +532,9 @@ class Loader():
 				self.changeControl(self.activate_zone,"ACTIVATE_ZONE")
 			elif self.pause in self.buttonList and self.pause.isOver(pygame.mouse.get_pos()):
 				self.changeControl(self.pause,"PAUSE")
+		elif event.type == pygame.KEYDOWN:
+			for box in self.inputBoxList:
+				box.handle_event(event)
 
 	def iter(self): #run but one frame only
 		self.screen.fill(self.BG_COLOR)
@@ -452,6 +545,9 @@ class Loader():
 
 		for button in self.buttonList:
 			button.draw(self.screen,self.WHITE)
+
+		for box in self.inputBoxList:
+			box.draw(self.screen)
 		
 		pygame.display.flip()
 	
@@ -460,7 +556,7 @@ class Loader():
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
 					sys.exit()
-				elif event.type == pygame.MOUSEBUTTONDOWN:
+				elif event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
 					self.handle_event(event)
 
 			self.screen.fill(self.BG_COLOR)
@@ -477,5 +573,8 @@ class Loader():
 
 			for button in self.buttonList:
 				button.draw(self.screen,self.WHITE)
+
+			for box in self.inputBoxList:
+				box.draw(self.screen)
 			
 			pygame.display.flip()
