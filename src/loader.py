@@ -371,23 +371,33 @@ class Loader():
 		self.title = Label(self.title_font, "GAME OVER", self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
 		self.button_width = self.title.rect.width
 		self.button_height = self.title.rect.height
+
+		if self.game_mode == "JOURNEY":
+			self.labelList.append(Label(self.title_font, "SCORE: "+self.objective, self.BLUE, (self.screen_width/2, self.title.rect.centery+self.button_height*0.5+self.vertical_offset), "center"))
+
 		self.restart = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
-									self.title.rect.centery+self.button_height*0.5+self.vertical_offset,
+									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
 									self.button_width,self.button_height,self.button_font,self.WHITE,"RESTART")
 		self.gohome = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
-									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
+									self.title.rect.centery+self.button_height*2.5+3*self.vertical_offset,
 									self.button_width,self.button_height,self.button_font,self.WHITE,"HOME")
 		self.buttonList = [self.restart, self.gohome]
 
 	def endScreen(self):
-		self.title = Label(self.title_font, self.objective, self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
+		self.title = Label(self.title_font, "GAME COMPLETED", self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
 		self.button_width = self.title.rect.width
 		self.button_height = self.title.rect.height
+
+		if self.game_mode == "JOURNEY":
+			self.labelList.append(Label(self.title_font, "SCORE: "+self.objective, self.BLUE, (self.screen_width/2, self.title.rect.centery+self.button_height*0.5+self.vertical_offset), "center"))
+		elif self.game_mode == "SPRINT":
+			self.labelList.append(Label(self.title_font, "TIME: "+self.objective, self.BLUE, (self.screen_width/2, self.title.rect.centery+self.button_height*0.5+self.vertical_offset), "center"))
+
 		self.restart = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
-									self.title.rect.centery+self.button_height*0.5+self.vertical_offset,
+									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
 									self.button_width,self.button_height,self.button_font,self.WHITE,"RESTART")
 		self.gohome = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
-									self.title.rect.centery+self.button_height*1.5+2*self.vertical_offset,
+									self.title.rect.centery+self.button_height*2.5+3*self.vertical_offset,
 									self.button_width,self.button_height,self.button_font,self.WHITE,"HOME")
 		self.buttonList = [self.restart, self.gohome]
 
@@ -497,7 +507,7 @@ class Loader():
 				elif self.prev_screen == "PAUSE":
 					self.pauseScreen()
 			elif self.journey in self.buttonList and self.journey.isOver(pygame.mouse.get_pos()):
-				print("Coming soon")
+				gameui.GameUI(True,"JOURNEY").run()
 			elif self.sprint in self.buttonList and self.sprint.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,"SPRINT").run()
 			elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):

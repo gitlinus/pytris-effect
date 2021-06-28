@@ -280,6 +280,8 @@ class Matrix:
 			res.insert(0,np.zeros(self.matrix.shape[1]))
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
+		if self.game_mode == "JOURNEY":
+			self.level = self.lines_cleared//10 + 1
 		if self.objective is not None:
 			if self.lines_cleared >= self.objective:
 				self.objective_met = True

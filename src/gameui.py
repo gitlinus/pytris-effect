@@ -96,6 +96,8 @@ class GameUI:
                 (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3), "topright")
             self.zone_label = Label(self.font, "ZONE", self.yellow,
                 (self.matrix_left_top[0] - self.offset - 2 * self.font_size, self.matrix_left_top[1] + self.m.height - 2 * self.font_size), "center")
+            self.level_label = Label(self.font, "LEVEL", self.yellow,
+                (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3 - 3 * self.font_size), "topright")
             
             # zone shape is a square diamond, diagonal length = 4*font_size
             self.zone_points = [
@@ -244,9 +246,17 @@ class GameUI:
             self.matrix_left_top[0] + self.m.width + self.offset,
             self.matrix_left_top[1] + 2 * self.m.height // 3 + 4 * self.font_size)).draw(self.screen)
         self.lines_label.draw(self.screen)
-        Label(self.font, self.getStats(), self.yellow,
+        num_lines = self.getStats()
+        if self.m.objective is not None:
+            num_lines += "/" + str(self.m.objective)
+        Label(self.font, num_lines, self.yellow,
               (self.matrix_left_top[0] - self.offset,
                 self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size),"topright").draw(self.screen)
+        if self.m.game_mode == "JOURNEY":
+            self.level_label.draw(self.screen)
+            Label(self.font, str(self.m.level), self.yellow,
+              (self.matrix_left_top[0] - self.offset,
+                self.matrix_left_top[1] + 2 * self.m.height // 3 - 2 * self.font_size),"topright").draw(self.screen)
 
     def drawZoneMeter(self):
         self.getZoneTimer()
@@ -519,6 +529,12 @@ class GameUI:
         self.das = config.das
         self.arr = config.arr
         self.soft_drop_speed = config.soft_drop_speed
+
+    def gravityEq(self, level):
+        return (0.8 - ((level-1) * 0.007)) ** (level-1)
+
+    def updateGravity(self):
+        self.gravity = 1/self.gravityEq(self.m.level)
     
     def updateVisited(self):
         for i in self.m.mino_locations:
@@ -585,20 +601,23 @@ class GameUI:
             pygame.display.flip()
 
             end_tick = self.getTick()
-            if (end_tick - start_tick) >= 1000 // self.gravity:
+            if (end_tick - start_tick) >= 1000 // self.gravity and not self.m.zone_state:
                 start_tick = end_tick
                 self.m.enforceGravity()
                 self.getMoveStatus(tick=end_tick)
                 # print(m.matrix)
 
+            if self.m.game_mode == "JOURNEY":
+                self.updateGravity()
+
         if self.m.game_over:
-            loader.Loader(scene="GAME OVER",game_mode=self.m.game_mode).run()
+            loader.Loader(scene="GAME OVER",game_mode=self.m.game_mode,objective=str(self.m.score)).run()
         elif self.m.objective_met:
             objective = ""
             if self.m.game_mode == "SPRINT":
                 objective = self.sprint_time
             elif self.m.game_mode == "JOURNEY":
-                objective = self.m.score
+                objective = str(self.m.score)
             loader.Loader(scene="END SCREEN",game_mode=self.m.game_mode,objective=objective).run()
 
     """Gym-like api. Need to have graphics_mode=False to use properly"""
