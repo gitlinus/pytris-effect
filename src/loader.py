@@ -274,6 +274,7 @@ class Loader():
 		self.journey = None
 		self.sprint = None
 		self.zen = None
+		self.versus = None
 		self.goback = None
 
 		# pause screen buttons
@@ -347,10 +348,13 @@ class Loader():
 		self.zen = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
 									self.title.rect.centery+self.button_height*2.5+3*self.vertical_offset,
 									self.button_width,self.button_height,self.button_font,self.WHITE,"ZEN")
+		self.versus = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
+									self.title.rect.centery+self.button_height*3.5+4*self.vertical_offset,
+									self.button_width,self.button_height,self.button_font,self.WHITE,"VERSUS")
 		self.goback = Button(self.BLACK,self.title.rect.centerx-self.button_width*1.5,
 									self.screen_height-3*self.button_height,
 									self.button_width/2,self.button_height,self.button_font,self.WHITE,"BACK")
-		self.buttonList = [self.journey, self.sprint, self.zen, self.goback]
+		self.buttonList = [self.journey, self.sprint, self.zen, self.versus, self.goback]
 
 	def pauseScreen(self):
 		self.title = Label(self.title_font, "PAUSED", self.BLUE, (self.screen_width/2, self.screen_height/4), "center")
@@ -512,6 +516,8 @@ class Loader():
 				gameui.GameUI(True,"SPRINT").run()
 			elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,"ZEN").run()
+			elif self.versus in self.buttonList and self.versus.isOver(pygame.mouse.get_pos()):
+				print("SEND HELP")
 			elif self.gohome in self.buttonList and self.gohome.isOver(pygame.mouse.get_pos()):
 				self.resetLists()
 				self.titleScreen()
