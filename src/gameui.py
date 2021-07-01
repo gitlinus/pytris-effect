@@ -59,9 +59,9 @@ class GameUI:
         self.move_cnt = 0
         self.enforce_lock_delay = False
 
-        self.clear_flag = None
-        self.clear_text = []
-        self.track_clear_text = []
+        # self.clear_flag = None
+        # self.clear_text = []
+        # self.track_clear_text = []
 
         self.use_graphics = graphic_mode
         if self.use_graphics:
@@ -72,12 +72,12 @@ class GameUI:
             pygame.init()
 
             self.screen_width, self.screen_height = pyautogui.size()
-            self.m = matrix.Matrix(2 * self.screen_height // 60,game_mode)  # matrix height should be roughly 2/3 of screen height
             self.vertical_offset = 50
             self.offset = 50
             self.screen_size = self.screen_width, self.screen_height - self.vertical_offset
             self.screen = pygame.display.set_mode(size=self.screen_size, flags=pygame.SCALED)
-            self.matrix_left_top = (self.screen_width - self.m.width) // 2, (self.screen_height - self.m.height) // 2
+            self.m = matrix.Matrix(game_mode, (self.screen_width, self.screen_height)) # initialize matrix object
+            self.matrix_left_top = self.m.topleft
 
             pygame.display.set_caption('Pytris Effect')
 
@@ -87,28 +87,7 @@ class GameUI:
             self.zone_colour = pygame.Color('dodgerblue')
 
             self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
-
-            self.time_label = Label(self.font, "TIME", self.yellow,
-                (self.matrix_left_top[0] + self.m.width + self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3))
-            self.score_label = Label(self.font, "SCORE", self.yellow,
-                (self.matrix_left_top[0] + self.m.width + self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3 + 3 * self.font_size))
-            self.lines_label = Label(self.font, "LINES", self.yellow,
-                (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3), "topright")
-            self.zone_label = Label(self.font, "ZONE", self.yellow,
-                (self.matrix_left_top[0] - self.offset - 2 * self.font_size, self.matrix_left_top[1] + self.m.height - 2 * self.font_size), "center")
-            self.level_label = Label(self.font, "LEVEL", self.yellow,
-                (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + 2 * self.m.height // 3 - 3 * self.font_size), "topright")
             
-            # zone shape is a square diamond, diagonal length = 4*font_size
-            self.zone_points = [
-                (self.matrix_left_top[0] - self.offset - 2 * self.font_size,self.matrix_left_top[1] + self.m.height - 4 * self.font_size),
-                (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + self.m.height - 2 * self.font_size),
-                (self.matrix_left_top[0] - self.offset - 2 * self.font_size, self.matrix_left_top[1] + self.m.height),
-                (self.matrix_left_top[0] - self.offset - 4 * self.font_size,self.matrix_left_top[1] + self.m.height - 2 * self.font_size)
-            ]  # top, right, bottom, left
-            self.zone_center = (
-                self.matrix_left_top[0] - self.offset - 2 * self.font_size,
-                self.matrix_left_top[1] + self.m.height - 2 * self.font_size)
         else:
             self.m = matrix.Matrix()
             self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
@@ -120,48 +99,54 @@ class GameUI:
             colour_map = lambda x: self.m.index2rgb[x]
             self.vec_map = np.vectorize(colour_map)
 
-    def drawMatrix(self):
+    def drawMatrix(self, m):
         """When using graphics, draw the board. When using api, return the board"""
+
+        matrix_left_top = m.topleft
+
         if self.use_graphics:
-            pygame.draw.rect(self.screen, self.white, pygame.Rect(self.matrix_left_top, self.m.dim()))
+            pygame.draw.rect(self.screen, self.white, pygame.Rect(matrix_left_top, m.dim()))
 
             # draw piece spawn area:
             for i in range(2):
                 for j in range(10):
-                    if self.m.matrix[i, j] != 0:
+                    if m.matrix[i, j] != 0:
                         pygame.draw.rect(
                             self.screen,
-                            self.m.index2rgb[self.m.matrix[i, j]],
-                            pygame.Rect((self.matrix_left_top[0] + j * self.m.mino_dim,
-                                         self.matrix_left_top[1] - (2 - i) * self.m.mino_dim),
-                                        (self.m.mino_dim, self.m.mino_dim))
+                            m.index2rgb[m.matrix[i, j]],
+                            pygame.Rect((matrix_left_top[0] + j * m.mino_dim,
+                                         matrix_left_top[1] - (2 - i) * m.mino_dim),
+                                        (m.mino_dim, m.mino_dim))
                         )
 
             # draw the actual matrix area:
             for i in range(20):
                 for j in range(10):
-                    if self.m.matrix[i + 2, j] != 0:
+                    if m.matrix[i + 2, j] != 0:
                         pygame.draw.rect(
                             self.screen,
-                            self.m.index2rgb[self.m.matrix[i + 2, j]],
-                            pygame.Rect((self.matrix_left_top[0] + j * self.m.mino_dim,
-                                         self.matrix_left_top[1] + i * self.m.mino_dim),
-                                        (self.m.mino_dim, self.m.mino_dim))
+                            m.index2rgb[m.matrix[i + 2, j]],
+                            pygame.Rect((matrix_left_top[0] + j * m.mino_dim,
+                                         matrix_left_top[1] + i * m.mino_dim),
+                                        (m.mino_dim, m.mino_dim))
                         )
         else:
-            visible = self.m.matrix[2:,:]
+            visible = m.matrix[2:,:]
             visible = self.vec_map(visible)
             return np.moveaxis(visible, 0, -1)
 
-    def drawQueue(self, length=5):  # max queue length of 5
+    def drawQueue(self, m, length=5):  # max queue length of 5
+
+        matrix_left_top = m.topleft
+
         if length > 5:
             length = 5
-        queue = self.m.getQueue()
+        queue = m.getQueue()
         drawingSpace = np.zeros((3, 4), dtype=int)
 
         for i in range(length):
             tetr = queue[i]
-            tetr_mat = self.m.tetromino2matrix[tetr]
+            tetr_mat = m.tetromino2matrix[tetr]
             drawingSpace[0:tetr_mat.shape[0], 0:tetr_mat.shape[1]] += tetr_mat
 
             for row in range(drawingSpace.shape[0]):
@@ -169,18 +154,21 @@ class GameUI:
                     if drawingSpace[row, col] != 0:
                         pygame.draw.rect(
                             self.screen,
-                            self.m.index2rgb[drawingSpace[row, col]],
-                            pygame.Rect((self.matrix_left_top[0] + self.m.width + self.offset + col * self.m.mino_dim,
-                                         self.matrix_left_top[1] + (3 * i + row - 2) * self.m.mino_dim),
-                                        (self.m.mino_dim, self.m.mino_dim))
+                            m.index2rgb[drawingSpace[row, col]],
+                            pygame.Rect((matrix_left_top[0] + m.width + self.offset + col * m.mino_dim,
+                                         matrix_left_top[1] + (3 * i + row - 2) * m.mino_dim),
+                                        (m.mino_dim, m.mino_dim))
                         )
                         drawingSpace[row, col] = 0
 
-    def drawHold(self):
-        tetr = self.m.getHold()
+    def drawHold(self, m):
+
+        matrix_left_top = m.topleft
+
+        tetr = m.getHold()
         if tetr != "":
             drawingSpace = np.zeros((3, 4), dtype=int)
-            tetr_mat = self.m.tetromino2matrix[tetr]
+            tetr_mat = m.tetromino2matrix[tetr]
             if tetr != 'I':
                 drawingSpace[0:tetr_mat.shape[0], 1:tetr_mat.shape[1] + 1] += tetr_mat
             else:
@@ -191,138 +179,180 @@ class GameUI:
                     if drawingSpace[row, col] != 0:
                         pygame.draw.rect(
                             self.screen,
-                            self.m.index2rgb[drawingSpace[row, col]],
-                            pygame.Rect((self.matrix_left_top[0] - self.offset + (col - 4) * self.m.mino_dim,
-                                         self.matrix_left_top[1] + (row - 2) * self.m.mino_dim),
-                                        (self.m.mino_dim, self.m.mino_dim))
+                            m.index2rgb[drawingSpace[row, col]],
+                            pygame.Rect((matrix_left_top[0] - self.offset + (col - 4) * m.mino_dim,
+                                         matrix_left_top[1] + (row - 2) * m.mino_dim),
+                                        (m.mino_dim, m.mino_dim))
                         )
                         drawingSpace[row, col] = 0
 
-    def drawGhost(self):  # draws ghost piece
+    def drawGhost(self, m):  # draws ghost piece
+
+        matrix_left_top = m.topleft
+
         if self.ghostPiece:
             dist = 0
             found = False
             for r in range(21):  # at most drop by a distance of 20
-                for i in self.m.mino_locations:
-                    if i[0] + r >= self.m.matrix.shape[0] or (
-                            self.m.matrix[i[0] + r, i[1]] != 0 and (i[0] + r, i[1]) not in self.m.mino_locations):
+                for i in m.mino_locations:
+                    if i[0] + r >= m.matrix.shape[0] or (
+                            m.matrix[i[0] + r, i[1]] != 0 and (i[0] + r, i[1]) not in m.mino_locations):
                         found = True
                         break
                 if found:
                     break
                 else:
                     dist = r
-            for pos in self.m.mino_locations:  # draw ghost piece darker then actual piece colour
-                if (dist + pos[0], pos[1]) not in self.m.mino_locations:  # don't cover actual piece
+            for pos in m.mino_locations:  # draw ghost piece darker then actual piece colour
+                if (dist + pos[0], pos[1]) not in m.mino_locations:  # don't cover actual piece
                     pygame.draw.rect(
                         self.screen,
-                        (lambda a: (a[0] // 3, a[1] // 3, a[2] // 3))(self.m.tetromino2rgb[self.m.current_tetromino]),
-                        pygame.Rect((self.matrix_left_top[0] + pos[1] * self.m.mino_dim,
-                                     self.matrix_left_top[1] + (dist + pos[0] - 2) * self.m.mino_dim),
-                                    (self.m.mino_dim, self.m.mino_dim))
+                        (lambda a: (a[0] // 3, a[1] // 3, a[2] // 3))(m.tetromino2rgb[m.current_tetromino]),
+                        pygame.Rect((matrix_left_top[0] + pos[1] * m.mino_dim,
+                                     matrix_left_top[1] + (dist + pos[0] - 2) * m.mino_dim),
+                                    (m.mino_dim, m.mino_dim))
                     )
 
-    def drawGrid(self):
+    def drawGrid(self, m):
+
+        matrix_left_top = m.topleft
+
         # draw grid
         if self.showGrid:
             for i in range(11):  # vertical lines
                 pygame.draw.line(self.screen, self.grey,
-                                 (self.matrix_left_top[0] + i * self.m.mino_dim, self.matrix_left_top[1] - 2 * self.m.mino_dim),
-                                 (self.matrix_left_top[0] + i * self.m.mino_dim, self.matrix_left_top[1] + self.m.height)
+                                 (matrix_left_top[0] + i * m.mino_dim, matrix_left_top[1] - 2 * m.mino_dim),
+                                 (matrix_left_top[0] + i * m.mino_dim, matrix_left_top[1] + m.height)
                                 )
             for i in range(22):  # horizontal lines
                 pygame.draw.line(self.screen, self.grey,
-                                 (self.matrix_left_top[0], self.matrix_left_top[1] + (i - 1) * self.m.mino_dim),
-                                 (self.matrix_left_top[0] + self.m.width, self.matrix_left_top[1] + (i - 1) * self.m.mino_dim)
+                                 (matrix_left_top[0], matrix_left_top[1] + (i - 1) * m.mino_dim),
+                                 (matrix_left_top[0] + m.width, matrix_left_top[1] + (i - 1) * m.mino_dim)
                                 )
 
-    def drawText(self):
-        self.time_label.draw(self.screen)
-        Label(self.font, self.getTimer(), self.yellow,
-              (self.matrix_left_top[0] + self.m.width + self.offset,
-               self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size)).draw(self.screen)
-        self.score_label.draw(self.screen)
-        Label(self.font, self.getScore(), self.yellow, (
-            self.matrix_left_top[0] + self.m.width + self.offset,
-            self.matrix_left_top[1] + 2 * self.m.height // 3 + 4 * self.font_size)).draw(self.screen)
-        self.lines_label.draw(self.screen)
-        num_lines = self.getStats()
-        if self.m.objective is not None:
-            num_lines += "/" + str(self.m.objective)
-        Label(self.font, num_lines, self.yellow,
-              (self.matrix_left_top[0] - self.offset,
-                self.matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size),"topright").draw(self.screen)
-        if self.m.game_mode == "JOURNEY":
-            self.level_label.draw(self.screen)
-            Label(self.font, str(self.m.level), self.yellow,
-              (self.matrix_left_top[0] - self.offset,
-                self.matrix_left_top[1] + 2 * self.m.height // 3 - 2 * self.font_size),"topright").draw(self.screen)
+    def drawText(self, m):
 
-    def drawZoneMeter(self):
+        matrix_left_top = m.topleft
+
+        time_label = Label(self.font, "TIME", self.yellow,
+            (matrix_left_top[0] + m.width + self.offset, matrix_left_top[1] + 2 * m.height // 3))
+        score_label = Label(self.font, "SCORE", self.yellow,
+            (matrix_left_top[0] + m.width + self.offset, matrix_left_top[1] + 2 * m.height // 3 + 3 * self.font_size))
+        lines_label = Label(self.font, "LINES", self.yellow,
+            (matrix_left_top[0] - self.offset, matrix_left_top[1] + 2 * m.height // 3), "topright")
+        level_label = Label(self.font, "LEVEL", self.yellow,
+            (matrix_left_top[0] - self.offset, matrix_left_top[1] + 2 * m.height // 3 - 3 * self.font_size), "topright")
+
+        time_label.draw(self.screen)
+        Label(self.font, self.getTimer(), self.yellow,
+              (matrix_left_top[0] + m.width + self.offset,
+               matrix_left_top[1] + 2 * m.height // 3 + self.font_size)).draw(self.screen)
+
+        score_label.draw(self.screen)
+        Label(self.font, self.getScore(), self.yellow, 
+            (matrix_left_top[0] + m.width + self.offset,
+            matrix_left_top[1] + 2 * m.height // 3 + 4 * self.font_size)).draw(self.screen)
+        
+        lines_label.draw(self.screen)
+        num_lines = self.getStats()
+        if m.objective is not None:
+            num_lines += "/" + str(m.objective)
+        Label(self.font, num_lines, self.yellow,
+              (matrix_left_top[0] - self.offset,
+                matrix_left_top[1] + 2 * m.height // 3 + self.font_size),"topright").draw(self.screen)
+        
+        if m.game_mode == "JOURNEY":
+            level_label.draw(self.screen)
+            Label(self.font, str(m.level), self.yellow,
+              (matrix_left_top[0] - self.offset,
+                matrix_left_top[1] + 2 * m.height // 3 - 2 * self.font_size),"topright").draw(self.screen)
+
+    def drawZoneMeter(self, m):
+
+        matrix_left_top = m.topleft
+
+        zone_label = Label(self.font, "ZONE", self.yellow,
+            (matrix_left_top[0] - self.offset - 2 * self.font_size, matrix_left_top[1] + m.height - 2 * self.font_size), "center")
+
+        # zone shape is a square diamond, diagonal length = 4*font_size
+        zone_points = [
+            (matrix_left_top[0] - self.offset - 2 * self.font_size, matrix_left_top[1] + m.height - 4 * self.font_size),
+            (matrix_left_top[0] - self.offset, matrix_left_top[1] + m.height - 2 * self.font_size),
+            (matrix_left_top[0] - self.offset - 2 * self.font_size, matrix_left_top[1] + m.height),
+            (matrix_left_top[0] - self.offset - 4 * self.font_size, matrix_left_top[1] + m.height - 2 * self.font_size)
+        ]  # top, right, bottom, left
+        zone_center = (
+            matrix_left_top[0] - self.offset - 2 * self.font_size,
+            matrix_left_top[1] + m.height - 2 * self.font_size)
+
         self.getZoneTimer()
-        percentage_filled = self.m.current_zone / self.m.full_zone
+        percentage_filled = m.current_zone / m.full_zone
         if 0 < percentage_filled < 0.5:  # draw triangle
             height = math.sqrt(percentage_filled * 8 * self.font_size * self.font_size)
             shift = math.tan(math.pi / 4) * height
-            right_point = (self.zone_center[0] + shift, self.zone_points[2][1] - height)
-            left_point = (self.zone_center[0] - shift, self.zone_points[2][1] - height)
-            pygame.draw.polygon(self.screen, self.zone_colour, [right_point, self.zone_points[2], left_point])
+            right_point = (zone_center[0] + shift, zone_points[2][1] - height)
+            left_point = (zone_center[0] - shift, zone_points[2][1] - height)
+            pygame.draw.polygon(self.screen, self.zone_colour, [right_point, zone_points[2], left_point])
         elif percentage_filled == 0.5:
             pygame.draw.polygon(self.screen, self.zone_colour,
-                                [self.zone_points[1], self.zone_points[2], self.zone_points[3]])
+                                [zone_points[1], zone_points[2], zone_points[3]])
         elif 0.5 < percentage_filled < 1:
             height = math.sqrt((1 - percentage_filled) * 8 * self.font_size * self.font_size)
             shift = math.tan(math.pi / 4) * height
-            right_point = (self.zone_center[0] + shift, self.zone_points[0][1] + height)
-            left_point = (self.zone_center[0] - shift, self.zone_points[0][1] + height)
-            pygame.draw.polygon(self.screen, self.zone_colour, self.zone_points)
-            pygame.draw.polygon(self.screen, self.black, [left_point, self.zone_points[0], right_point])
+            right_point = (zone_center[0] + shift, zone_points[0][1] + height)
+            left_point = (zone_center[0] - shift, zone_points[0][1] + height)
+            pygame.draw.polygon(self.screen, self.zone_colour, zone_points)
+            pygame.draw.polygon(self.screen, self.black, [left_point, zone_points[0], right_point])
         elif percentage_filled >= 1:
-            pygame.draw.polygon(self.screen, self.zone_colour, self.zone_points)
+            pygame.draw.polygon(self.screen, self.zone_colour, zone_points)
         if percentage_filled >= 1:  # self.yellow border if filled
-            pygame.draw.polygon(self.screen, self.yellow, self.zone_points, width=5)
+            pygame.draw.polygon(self.screen, self.yellow, zone_points, width=5)
         else:
-            pygame.draw.polygon(self.screen, self.grey, self.zone_points, width=5)
-        self.zone_label.draw(self.screen)
+            pygame.draw.polygon(self.screen, self.grey, zone_points, width=5)
+        
+        zone_label.draw(self.screen)
 
         # draw border around matrix for zone
-        if self.m.zone_state:
-            pygame.draw.polygon(self.screen, self.zone_colour, [self.matrix_left_top, (self.matrix_left_top[0]+self.m.width,self.matrix_left_top[1]), 
-                                                                    (self.matrix_left_top[0]+self.m.width,self.matrix_left_top[1]+self.m.height),
-                                                                    (self.matrix_left_top[0],self.matrix_left_top[1]+self.m.height)], width=10)
+        if m.zone_state:
+            pygame.draw.polygon(self.screen, self.zone_colour, [matrix_left_top, (matrix_left_top[0]+m.width,matrix_left_top[1]), 
+                                                                    (matrix_left_top[0]+m.width,matrix_left_top[1]+m.height),
+                                                                    (matrix_left_top[0],matrix_left_top[1]+m.height)], width=10)
 
-    def drawClearText(self):
-        if self.m.prev_clear_text != [''] and self.m.prev_clear_text != self.track_clear_text:
-            self.track_clear_text = self.m.prev_clear_text
-            self.clear_text.clear()
-            self.clear_flag = self.getTick()
-            for i in range(len(self.m.prev_clear_text)):
-                if self.m.prev_clear_text[i].find("PERFECT CLEAR") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.yellow, 
-                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
-                elif self.m.prev_clear_text[i].find("T-SPIN") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.purple, 
-                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
-                elif self.m.prev_clear_text[i].find("B2B") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.light_blue, 
-                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
-                elif self.m.prev_clear_text[i].find("TRIS") != -1:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.zone_colour, 
-                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
+    def drawClearText(self, m):
+
+        matrix_left_top = m.topleft
+
+        if m.prev_clear_text != [''] and m.prev_clear_text != m.track_clear_text:
+            m.track_clear_text = m.prev_clear_text
+            m.clear_text.clear()
+            m.clear_flag = self.getTick()
+            for i in range(len(m.prev_clear_text)):
+                if m.prev_clear_text[i].find("PERFECT CLEAR") != -1:
+                    m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.yellow, 
+                        (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
+                elif m.prev_clear_text[i].find("T-SPIN") != -1:
+                    self.clear_text.append(Label(self.font, m.prev_clear_text[i], self.purple, 
+                        (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
+                elif m.prev_clear_text[i].find("B2B") != -1:
+                    m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.light_blue, 
+                        (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
+                elif m.prev_clear_text[i].find("TRIS") != -1:
+                    m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.zone_colour, 
+                        (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 else:
-                    self.clear_text.append(Label(self.font, self.m.prev_clear_text[i], self.white, 
-                        (self.matrix_left_top[0] - self.offset, self.matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
-            for msg in self.clear_text:
+                    m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.white, 
+                        (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
+            for msg in m.clear_text:
                 msg.draw(self.screen)
         else:
-            if self.clear_flag is not None:
-                if self.getTick() - self.clear_flag <= 2000:  # show for 2 seconds max
-                    for msg in self.clear_text:
+            if m.clear_flag is not None:
+                if self.getTick() - m.clear_flag <= 2000:  # show for 2 seconds max
+                    for msg in m.clear_text:
                         msg.draw(self.screen)
                 else:
-                    self.clear_flag = None
-            if self.m.prev_clear_text == ['']:
-                self.track_clear_text.clear()
+                    m.clear_flag = None
+            if m.prev_clear_text == ['']:
+                m.track_clear_text.clear()
 
     def getZoneTimer(self):
         if self.m.zone_state:
@@ -590,14 +620,14 @@ class GameUI:
             self.getContinuousInput()
             self.enforceAutoLock()
             self.screen.fill(self.black)
-            self.drawMatrix()
-            self.drawGhost()
-            self.drawGrid()
-            self.drawQueue()
-            self.drawHold()
-            self.drawText()
-            self.drawClearText()
-            self.drawZoneMeter()
+            self.drawMatrix(self.m)
+            self.drawGhost(self.m)
+            self.drawGrid(self.m)
+            self.drawQueue(self.m)
+            self.drawHold(self.m)
+            self.drawText(self.m)
+            self.drawClearText(self.m)
+            self.drawZoneMeter(self.m)
             pygame.display.flip()
 
             end_tick = self.getTick()

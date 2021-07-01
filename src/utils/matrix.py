@@ -36,10 +36,13 @@ class Matrix:
 		'Z':[(0,3),(0,4),(1,4),(1,5)]
 	}
 
-	def __init__(self, mino_dim=30, game_mode="ZEN"):
-		self.mino_dim = mino_dim # dimensions in number of pixels (only used for GUI)
-		self.width = mino_dim * 10 # dimensions in number of pixels (only used for GUI)
-		self.height = mino_dim * 20 # dimensions in number of pixels (only used for GUI)
+	def __init__(self, game_mode="ZEN", screen_dim=None): 
+		
+		self.screen_dim = screen_dim
+		self.mino_dim = 2 * screen_dim[1] // 60 # dimensions in number of pixels (only used for GUI) # matrix height should be roughly 2/3 of screen height
+		self.width = self.mino_dim * 10 # dimensions in number of pixels (only used for GUI)
+		self.height = self.mino_dim * 20 # dimensions in number of pixels (only used for GUI)
+		self.topleft = (screen_dim[0] - self.width) // 2, (screen_dim[1] - self.height) // 2 # position of the topleft coordinates of the matrix (only used for GUI)
 		self.matrix = np.zeros((22,10),dtype=int)
 		self.level = None
 		self.score = 0
@@ -54,6 +57,9 @@ class Matrix:
 		self.b2b = False
 		self.prev2moves = []
 		self.prev_clear_text = []
+		self.clear_text = [] # used by gameui
+		self.track_clear_text = [] # used by gameui
+		self.clear_flag = None # used by gameui
 		self.current_zone = 0
 		self.full_zone = 40
 		self.zone_state = False
@@ -339,7 +345,7 @@ class Matrix:
 			temp1 = self.lines_cleared
 		if not clear_score:
 			temp2 = self.score
-		self.__init__(game_mode=self.game_mode)
+		self.__init__(game_mode=self.game_mode,screen_dim=self.screen_dim)
 		self.lines_cleared = temp1
 		self.score = temp2
 		
