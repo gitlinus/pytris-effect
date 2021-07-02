@@ -331,7 +331,7 @@ class GameUI:
                     m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.yellow, 
                         (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 elif m.prev_clear_text[i].find("T-SPIN") != -1:
-                    self.clear_text.append(Label(self.font, m.prev_clear_text[i], self.purple, 
+                    m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.purple, 
                         (matrix_left_top[0] - self.offset, matrix_left_top[1] + (5 + i) * self.font_size),"topright"))
                 elif m.prev_clear_text[i].find("B2B") != -1:
                     m.clear_text.append(Label(self.font, m.prev_clear_text[i], self.light_blue, 
