@@ -26,6 +26,7 @@ action2key = {
 	"RESET":None, "ACTIVATE_ZONE":None, "PAUSE":None
 }
 
+gravity = 1
 das = 100
 arr = 4
 soft_drop_speed = 10
@@ -56,3 +57,14 @@ def key2str(key):
 	return pygame.key.name(key)
 
 getKeyAssignments()
+
+# colours
+black = 0, 0, 0
+white = 255, 255, 255
+grey = 128, 128, 128
+yellow = 255, 255, 0
+purple = 255, 0, 255
+light_blue = 0, 127, 255
+
+# (TODO): create separate configs for different classes
+# game related configs
