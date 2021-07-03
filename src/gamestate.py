@@ -610,7 +610,6 @@ class GameState:
 
         for event in events:
             if event.type == self.cls.KEYDOWN or event.type == self.cls.KEYUP:
-                print(event)
                 self.getFixedInput(event.type, event.key)
 
         self.getContinuousInput()

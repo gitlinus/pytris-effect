@@ -68,15 +68,15 @@ class Wrapper:
 class Pane:
 
     # (TODO): -allow state to be initialized to opponent's board
-    #         -allow passing in game mode
-    def __init__(self, cls, coordinates, screen, subpanes=[]):
+    def __init__(self, cls, coordinates, screen, subpanes=[], **kwargs):
         self.cls = cls
         self.coordinates = coordinates
         self.screen = screen
         self.panes = subpanes
         self.state = GameState(
             cls,
-            Wrapper(cls, screen, coordinates)
+            Wrapper(cls, screen, coordinates),
+            **kwargs
         )
 
     def render(self, events=[]):

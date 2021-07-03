@@ -34,6 +34,7 @@ class GameUI:
             pygame,
             (0, 0, self.screen_width, self.screen_height),
             self.screen,
+            game_mode=game_mode
         ))
 
     def updateConfig(self):
@@ -66,15 +67,15 @@ class GameUI:
 
         # (TODO): refactor loader into a pane
         print("GAME OVER")
-        if self.m.game_over:
-            loader.Loader(scene="GAME OVER",game_mode=self.m.game_mode,objective=str(self.m.score)).run()
-        elif self.m.objective_met:
+        if player_board.gameOver():
+            loader.Loader(scene="GAME OVER",game_mode=player_board.m.game_mode,objective=str(player_board.m.score)).run()
+        elif player_board.objectiveMet():
             objective = ""
-            if self.m.game_mode == "SPRINT":
-                objective = self.sprint_time
-            elif self.m.game_mode == "JOURNEY":
-                objective = str(self.m.score)
-            loader.Loader(scene="END SCREEN",game_mode=self.m.game_mode,objective=objective).run()
+            if player_board.m.game_mode == "SPRINT":
+                objective = player_board.sprint_time
+            elif player_board.m.game_mode == "JOURNEY":
+                objective = str(player_board.m.score)
+            loader.Loader(scene="END SCREEN",game_mode=player_board.m.game_mode,objective=objective).run()
 
 
 
