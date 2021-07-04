@@ -77,6 +77,8 @@ class Matrix:
 		elif self.game_mode == "JOURNEY":
 			self.objective = 150
 			self.level = 1
+		elif self.game_mode == "VERSUS":
+			self.objective = None
 		else:
 			raise Exception("Unknown Game Mode")
 
@@ -337,6 +339,9 @@ class Matrix:
 				res.insert(0,np.zeros(self.matrix.shape[1]))
 			self.matrix = np.asarray(res,dtype=int)
 			self.placeTetromino()
+
+	def appendGarbage(self, numLines):
+		pass
 
 	def resetMatrix(self,clear_lines=True,clear_score=True):
 		temp1 = 0

@@ -1,5 +1,26 @@
 import numpy as np
 
+garbageTable = {
+	"":0,
+	"SINGLE":0,
+	"MINI T-SPIN":0,
+	"MINI T-SPIN SINGLE":1,
+	"DOUBLE":1,
+	"T-SPIN":0,
+	"MINI T-SPIN DOUBLE":4,
+	"TRIPLE":2,
+	"B2B MINI T-SPIN DOUBLE":5,
+	"QUADRUPLE":4,
+	"T-SPIN SINGLE":2,
+	"B2B T-SPIN SINGLE":3,
+	"B2B QUADRUPLE":5,
+	"T-SPIN DOUBLE":4,
+	"T-SPIN TRIPLE":6,
+	"B2B T-SPIN DOUBLE":5,
+	"B2B T-SPIN TRIPLE":7,
+	"PERFECT CLEAR":10
+}
+
 scoringTable = {
 	"":0,
 	"SINGLE":100,

@@ -25,16 +25,31 @@ class GameUI:
         self.vertical_offset = 50
         self.screen_size = self.screen_width, self.screen_height - self.vertical_offset
         self.screen = pygame.display.set_mode(size=self.screen_size, flags=pygame.SCALED)
+        self.game_mode = game_mode
         
         pygame.display.set_caption('Pytris Effect')
 
         # for now, we replicate the original game using one pane that takes up the entire screen
-        self.panes.append(Pane(
-            pygame,
-            (0, 0, self.screen_size[0], self.screen_size[1]),
-            self.screen,
-            game_mode=game_mode
-        ))
+        if game_mode != "VERSUS":
+            self.panes.append(Pane(
+                pygame,
+                (0, 0, self.screen_size[0], self.screen_size[1]),
+                self.screen,
+                game_mode=game_mode
+            ))
+        else:
+            self.panes.append(Pane( # player controlls left matrix only
+                pygame,
+                (0, 0, self.screen_size[0]//2, self.screen_size[1]),
+                self.screen,
+                game_mode=game_mode
+            ))
+            self.panes.append(Pane(
+                pygame,
+                (self.screen_size[0]//2, 0, self.screen_size[0]//2, self.screen_size[1]),
+                self.screen,
+                game_mode=game_mode
+            ))
 
     def updateConfig(self):
         self.das = config.das
@@ -44,7 +59,7 @@ class GameUI:
     def procKey(self, key_event, key_press):
         if key_event == pygame.KEYDOWN:
             if key_press in config.key2action:  # (TODO): use enums instead of string constants
-                if config.key2action[key_press] == "PAUSE":
+                if config.key2action[key_press] == "PAUSE" and self.game_mode != "VERSUS":
                     print("PAUSE")
                     loader.Loader(scene="PAUSE", prev="PAUSE").run()
                     self.updateConfig()

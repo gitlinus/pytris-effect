@@ -517,7 +517,7 @@ class Loader():
 			elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,"ZEN").run()
 			elif self.versus in self.buttonList and self.versus.isOver(pygame.mouse.get_pos()):
-				print("SEND HELP")
+				gameui.GameUI(True,"VERSUS").run()
 			elif self.gohome in self.buttonList and self.gohome.isOver(pygame.mouse.get_pos()):
 				self.resetLists()
 				self.titleScreen()

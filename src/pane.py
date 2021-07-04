@@ -79,9 +79,13 @@ class Pane:
             **kwargs
         )
 
+    def fillPane(self):
+        self.cls.draw.rect(self.screen,config.black,self.cls.Rect(self.coordinates))
+
     def render(self, events=[]):
         # render its own state and then its children
-        self.screen.fill(config.black)
+        # self.screen.fill(config.black)
+        self.fillPane()
         self.state.render(events)
         for pane in self.panes:
             pane.render(events)
