@@ -22,8 +22,7 @@ class GameUI:
         pygame.init()
 
         self.screen_width, self.screen_height = pyautogui.size()
-        self.vertical_offset = 0
-        self.offset = 0
+        self.vertical_offset = 50
         self.screen_size = self.screen_width, self.screen_height - self.vertical_offset
         self.screen = pygame.display.set_mode(size=self.screen_size, flags=pygame.SCALED)
         
@@ -32,7 +31,7 @@ class GameUI:
         # for now, we replicate the original game using one pane that takes up the entire screen
         self.panes.append(Pane(
             pygame,
-            (0, 0, self.screen_width, self.screen_height),
+            (0, 0, self.screen_size[0], self.screen_size[1]),
             self.screen,
             game_mode=game_mode
         ))

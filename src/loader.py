@@ -213,13 +213,13 @@ class InputBox:
 			if self.active:
 				if event.key == pygame.K_RETURN:
 					if self.config_attr == "DAS":
-						config.das = min(config.MAX_DAS,int(self.text))
+						config.das = max(min(config.MAX_DAS,int(self.text)),0)
 						self.text = str(config.das)
 					elif self.config_attr == "ARR":
-						config.arr = min(config.MAX_ARR,int(self.text))
+						config.arr = max(min(config.MAX_ARR,int(self.text)),0)
 						self.text = str(config.arr)
 					elif self.config_attr == "SOFT_DROP_SPEED":
-						config.soft_drop_speed = min(config.MAX_SOFT_DROP_SPEED,int(self.text))
+						config.soft_drop_speed = max(min(config.MAX_SOFT_DROP_SPEED,int(self.text)),1)
 						self.text = str(config.soft_drop_speed)
 					self.active = False
 					self.colour = self.COLOUR_ACTIVE if self.active else self.COLOUR_INACTIVE
