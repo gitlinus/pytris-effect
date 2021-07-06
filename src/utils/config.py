@@ -1,29 +1,48 @@
 import pygame
+from . import constants
 
 # possible actions
-actions = ["ROTATE_CW", "ROTATE_CCW", "ROTATE_180", "SHIFT_LEFT", 
-			"SHIFT_RIGHT", "SOFT_DROP", "HARD_DROP", "SWAP_HOLD", 
-			"RESET", "ACTIVATE_ZONE", "PAUSE"]
+actions = [
+			constants.Action.ROTATE_CW, 
+			constants.Action.ROTATE_CCW, 
+			constants.Action.ROTATE_180, 
+			constants.Action.SHIFT_LEFT, 
+			constants.Action.SHIFT_RIGHT,
+			constants.Action.SOFT_DROP,
+			constants.Action.HARD_DROP,
+			constants.Action.SWAP_HOLD, 
+			constants.Action.RESET,
+			constants.Action.ACTIVATE_ZONE,
+			constants.Action.PAUSE
+		]
 
 # default control mappping
 key2action = { 
-	pygame.K_UP:"ROTATE_CW",
-	pygame.K_z:"ROTATE_CCW",
-	pygame.K_x:"ROTATE_180",
-	pygame.K_LEFT:"SHIFT_LEFT",
-	pygame.K_RIGHT:"SHIFT_RIGHT",
-	pygame.K_DOWN:"SOFT_DROP",
-	pygame.K_SPACE:"HARD_DROP",
-	pygame.K_LSHIFT:"SWAP_HOLD",
-	pygame.K_r:"RESET",
-	pygame.K_c:"ACTIVATE_ZONE",
-	pygame.K_p:"PAUSE"
+	pygame.K_UP:constants.Action.ROTATE_CW,
+	pygame.K_z:constants.Action.ROTATE_CCW,
+	pygame.K_x:constants.Action.ROTATE_180,
+	pygame.K_LEFT:constants.Action.SHIFT_LEFT,
+	pygame.K_RIGHT:constants.Action.SHIFT_RIGHT,
+	pygame.K_DOWN:constants.Action.SOFT_DROP,
+	pygame.K_SPACE:constants.Action.HARD_DROP,
+	pygame.K_LSHIFT:constants.Action.SWAP_HOLD,
+	pygame.K_r:constants.Action.RESET,
+	pygame.K_c:constants.Action.ACTIVATE_ZONE,
+	pygame.K_p:constants.Action.PAUSE
 }
 
 action2key = {
-	"ROTATE_CW":None, "ROTATE_CCW":None, "ROTATE_180":None, "SHIFT_LEFT":None, 
-	"SHIFT_RIGHT":None, "SOFT_DROP":None, "HARD_DROP":None, "SWAP_HOLD":None,
-	"RESET":None, "ACTIVATE_ZONE":None, "PAUSE":None
+	constants.Action.ROTATE_CW:None,
+	constants.Action.ROTATE_CCW:None,
+	constants.Action.ROTATE_180:None,
+	constants.Action.SHIFT_LEFT:None, 
+	constants.Action.SHIFT_RIGHT:None,
+	constants.Action.SOFT_DROP:None,
+	constants.Action.HARD_DROP:None,
+	constants.Action.SWAP_HOLD:None,
+	constants.Action.RESET:None,
+	constants.Action.ACTIVATE_ZONE:None,
+	constants.Action.PAUSE:None
 }
 
 gravity = 1

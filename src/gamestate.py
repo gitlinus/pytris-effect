@@ -1,4 +1,4 @@
-from .utils import config, matrix
+from .utils import config, matrix, constants
 import numpy as np
 import math
 
@@ -20,7 +20,7 @@ class GameState:
                  cls,
                  draw,
                  graphic_mode=True,
-                 game_mode="ZEN",
+                 game_mode=constants.GameMode.ZEN,
                  **kwargs):
 
         self.cls = cls
@@ -239,7 +239,7 @@ class GameState:
               self.draw.transformCoordinates((matrix_left_top[0] - self.offset,
                     matrix_left_top[1] + 2 * self.m.height // 3 + self.font_size)), "topright").draw(self.screen)
 
-        if self.m.game_mode == "JOURNEY":
+        if self.m.game_mode == constants.GameMode.JOURNEY:
             level_label.draw(self.screen)
             Label(self.font, str(self.m.level), config.yellow,
                   self.draw.transformCoordinates((matrix_left_top[0] - self.offset,
@@ -371,7 +371,7 @@ class GameState:
         time_str += str(hours) + ":" if hours != 0 else ""
         time_str += str(minutes) + ":" if minutes >= 10 else "0" + str(minutes) + ":"
         time_str += str(seconds) if seconds >= 10 else "0" + str(seconds)
-        if self.m.game_mode == "SPRINT":
+        if self.m.game_mode == constants.GameMode.SPRINT:
             time_str += "." + str(milles)
             if self.m.objective_met:
                 self.sprint_time = time_str
@@ -396,28 +396,28 @@ class GameState:
 
         # no das when using env-mode
         if key_event == self.cls.KEYDOWN:
-            if key_press in config.key2action: # (TODO): use enums instead of string constants
-                if config.key2action[key_press] == "HARD_DROP":
+            if key_press in config.key2action:
+                if config.key2action[key_press] == constants.Action.HARD_DROP:
                     self.m.hardDrop()
                     print("HARD_DROP")
                     self.getMoveStatus(True)
-                elif config.key2action[key_press] == "ROTATE_CW":
+                elif config.key2action[key_press] == constants.Action.ROTATE_CW:
                     self.m.rotateCW()
                     print("ROTATE_CW")
                     self.getMoveStatus(tick=self.getTick())
-                elif config.key2action[key_press] == "ROTATE_CCW":
+                elif config.key2action[key_press] == constants.Action.ROTATE_CCW:
                     self.m.rotateCCW()
                     print("ROTATE_CCW")
                     self.getMoveStatus(tick=self.getTick())
-                elif config.key2action[key_press] == "ROTATE_180":
+                elif config.key2action[key_press] == constants.Action.ROTATE_180:
                     self.m.rotate180()
                     print("ROTATE_180")
                     self.getMoveStatus(tick=self.getTick())
-                elif config.key2action[key_press] == "SWAP_HOLD":
+                elif config.key2action[key_press] == constants.Action.SWAP_HOLD:
                     self.m.swapHold()
                     print("SWAP_HOLD")
                     self.getMoveStatus(True)
-                elif config.key2action[key_press] == "SHIFT_LEFT":
+                elif config.key2action[key_press] == constants.Action.SHIFT_LEFT:
                     print("SHIFT_LEFT")
                     if self.use_graphics:
                         self.shift_once = True
@@ -432,7 +432,7 @@ class GameState:
                     else:
                         self.m.shiftLeft()
                         self.getMoveStatus(tick=self.getTick())
-                elif config.key2action[key_press] == "SHIFT_RIGHT":
+                elif config.key2action[key_press] == constants.Action.SHIFT_RIGHT:
                     print("SHIFT_RIGHT")
                     if self.use_graphics:
                         self.shift_once = True
@@ -447,29 +447,29 @@ class GameState:
                     else:
                         self.m.shiftRight()
                         self.getMoveStatus(tick=self.getTick())
-                elif config.key2action[key_press] == "SOFT_DROP":
+                elif config.key2action[key_press] == constants.Action.SOFT_DROP:
                     print("SOFT_DROP")
                     self.soft_drop_tick = self.getTick()
                     if not self.use_graphics:
                         self.m.softDrop()
                         self.getMoveStatus(tick=self.getTick())
-                elif config.key2action[key_press] == "RESET":
+                elif config.key2action[key_press] == constants.Action.RESET:
                     print("RESET")
                     self.reset()
-                elif config.key2action[key_press] == "ACTIVATE_ZONE":
+                elif config.key2action[key_press] == constants.Action.ACTIVATE_ZONE:
                     print("ACTIVATE_ZONE")
                     if self.m.zoneReady():
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()
         elif key_event == self.cls.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:
-                if config.key2action[key_press] == "SHIFT_LEFT":
+                if config.key2action[key_press] == constants.Action.SHIFT_LEFT:
                     self.left_das_tick = None
                     self.left_arr_tick = None
-                elif config.key2action[key_press] == "SHIFT_RIGHT":
+                elif config.key2action[key_press] == constants.Action.SHIFT_RIGHT:
                     self.right_das_tick = None
                     self.right_arr_tick = None
-                elif config.key2action[key_press] == "SOFT_DROP":
+                elif config.key2action[key_press] == constants.Action.SOFT_DROP:
                     self.soft_drop_tick = None
 
     def getContinuousInput(self):  # for continuous actions (shift left, shift right, soft drop)
@@ -477,28 +477,28 @@ class GameState:
 
         current_tick = self.getTick()
 
-        if not keys[config.action2key["SHIFT_LEFT"]] and not keys[config.action2key["SHIFT_RIGHT"]]:  # reset direction
+        if not keys[config.action2key[constants.Action.SHIFT_LEFT]] and not keys[config.action2key[constants.Action.SHIFT_RIGHT]]:  # reset direction
             self.das_direction = None
 
         if self.cancel_das:
-            if self.left_das_tick is None and (keys[config.action2key["SHIFT_LEFT"]] and not keys[
-                config.action2key["SHIFT_RIGHT"]]):  # das was cancelled but key was held down still
+            if self.left_das_tick is None and (keys[config.action2key[constants.Action.SHIFT_LEFT]] and not keys[
+                config.action2key[constants.Action.SHIFT_RIGHT]]):  # das was cancelled but key was held down still
                 self.left_das_tick = current_tick
                 self.das_direction = "LEFT"
-            if self.right_das_tick is None and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[
-                config.action2key["SHIFT_LEFT"]]):  # das was cancelled but key was held down still
+            if self.right_das_tick is None and (keys[config.action2key[constants.Action.SHIFT_RIGHT]] and not keys[
+                config.action2key[constants.Action.SHIFT_LEFT]]):  # das was cancelled but key was held down still
                 self.right_das_tick = current_tick
                 self.das_direction = "RIGHT"
         else:
-            if self.das_direction == "RIGHT" and (keys[config.action2key["SHIFT_LEFT"]] and not keys[
-                config.action2key["SHIFT_RIGHT"]]):  # direction changed but no das cancellation
+            if self.das_direction == "RIGHT" and (keys[config.action2key[constants.Action.SHIFT_LEFT]] and not keys[
+                config.action2key[constants.Action.SHIFT_RIGHT]]):  # direction changed but no das cancellation
                 self.das_direction = "LEFT"
-            if self.das_direction == "LEFT" and (keys[config.action2key["SHIFT_RIGHT"]] and not keys[
-                config.action2key["SHIFT_LEFT"]]):  # direction changed but no das cancellation
+            if self.das_direction == "LEFT" and (keys[config.action2key[constants.Action.SHIFT_RIGHT]] and not keys[
+                config.action2key[constants.Action.SHIFT_LEFT]]):  # direction changed but no das cancellation
                 self.das_direction = "RIGHT"
 
         if self.das_direction == "LEFT" and self.left_das_tick is not None:  # das was already started
-            if current_tick - self.left_das_tick >= self.das and keys[config.action2key["SHIFT_LEFT"]]:
+            if current_tick - self.left_das_tick >= self.das and keys[config.action2key[constants.Action.SHIFT_LEFT]]:
                 # if pressed for das duration, set in arr
                 if self.left_arr_tick is None:
                     self.left_arr_tick = current_tick
@@ -513,7 +513,7 @@ class GameState:
                 self.getMoveStatus(tick=current_tick)
 
         elif self.das_direction == "RIGHT" and self.right_das_tick is not None:
-            if current_tick - self.right_das_tick >= self.das and keys[config.action2key["SHIFT_RIGHT"]]:
+            if current_tick - self.right_das_tick >= self.das and keys[config.action2key[constants.Action.SHIFT_RIGHT]]:
                 if self.right_arr_tick is None:
                     self.right_arr_tick = current_tick
                 else:  # set in arr
@@ -527,7 +527,7 @@ class GameState:
                 self.getMoveStatus(tick=current_tick)
 
         if self.soft_drop_tick is not None and keys[
-            config.action2key["SOFT_DROP"]]:  # treat soft drop like faster gravity
+            config.action2key[constants.Action.SOFT_DROP]]:  # treat soft drop like faster gravity
             if (current_tick - self.soft_drop_tick) >= 1000 // self.soft_drop_speed:
                 self.m.softDrop()
                 self.soft_drop_tick = current_tick
@@ -598,7 +598,7 @@ class GameState:
     def reset(self):
         self.m.resetMatrix()
         self.m.addTetromino()
-        if not self.m.game_mode == "ZEN":
+        if not self.m.game_mode == constants.GameMode.ZEN:
             self.game_start_tick = self.getTick()
 
     def render(self, events=[]):
@@ -629,6 +629,5 @@ class GameState:
             self.m.enforceGravity()
             self.getMoveStatus(tick=cur_tick)
 
-        # (TODO): turn constants into py enums
-        if self.m.game_mode == "JOURNEY":
+        if self.m.game_mode == constants.GameMode.JOURNEY:
             self.updateGravity()

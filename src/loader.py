@@ -2,7 +2,7 @@ import sys
 import pygame 
 import pyautogui
 from . import gameui
-from .utils import config
+from .utils import config, constants
 #Loading scenes
 
 pygame.init()
@@ -376,7 +376,7 @@ class Loader():
 		self.button_width = self.title.rect.width
 		self.button_height = self.title.rect.height
 
-		if self.game_mode == "JOURNEY":
+		if self.game_mode == constants.GameMode.JOURNEY:
 			self.labelList.append(Label(self.title_font, "SCORE: "+self.objective, self.BLUE, (self.screen_width/2, self.title.rect.centery+self.button_height*0.5+self.vertical_offset), "center"))
 
 		self.restart = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
@@ -392,9 +392,9 @@ class Loader():
 		self.button_width = self.title.rect.width
 		self.button_height = self.title.rect.height
 
-		if self.game_mode == "JOURNEY":
+		if self.game_mode == constants.GameMode.JOURNEY:
 			self.labelList.append(Label(self.title_font, "SCORE: "+self.objective, self.BLUE, (self.screen_width/2, self.title.rect.centery+self.button_height*0.5+self.vertical_offset), "center"))
-		elif self.game_mode == "SPRINT":
+		elif self.game_mode == constants.GameMode.SPRINT:
 			self.labelList.append(Label(self.title_font, "TIME: "+self.objective, self.BLUE, (self.screen_width/2, self.title.rect.centery+self.button_height*0.5+self.vertical_offset), "center"))
 
 		self.restart = Button(self.BLACK,self.title.rect.centerx-self.button_width/2,
@@ -421,27 +421,27 @@ class Loader():
 				self.buttonList.append(Button(self.BLACK,self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
 				meow = True
 				j += 1
-			if i=="ROTATE_CW":
+			if i==constants.Action.ROTATE_CW:
 				self.rotate_cw = self.buttonList[-1]
-			elif i=="ROTATE_CCW":
+			elif i==constants.Action.ROTATE_CCW:
 				self.rotate_ccw = self.buttonList[-1]
-			elif i=="ROTATE_180":
+			elif i==constants.Action.ROTATE_180:
 				self.rotate_180 = self.buttonList[-1]
-			elif i=="SHIFT_LEFT":
+			elif i==constants.Action.SHIFT_LEFT:
 				self.shift_left = self.buttonList[-1]
-			elif i=="SHIFT_RIGHT":
+			elif i==constants.Action.SHIFT_RIGHT:
 				self.shift_right = self.buttonList[-1]
-			elif i=="SOFT_DROP":
+			elif i==constants.Action.SOFT_DROP:
 				self.soft_drop = self.buttonList[-1]
-			elif i=="HARD_DROP":
+			elif i==constants.Action.HARD_DROP:
 				self.hard_drop = self.buttonList[-1]
-			elif i=="SWAP_HOLD":
+			elif i==constants.Action.SWAP_HOLD:
 				self.swap_hold = self.buttonList[-1]
-			elif i=="RESET":
+			elif i==constants.Action.RESET:
 				self.reset = self.buttonList[-1]
-			elif i=="ACTIVATE_ZONE":
+			elif i==constants.Action.ACTIVATE_ZONE:
 				self.activate_zone = self.buttonList[-1]
-			elif i=="PAUSE":
+			elif i==constants.Action.PAUSE:
 				self.pause = self.buttonList[-1]
 
 		self.goback = Button(self.BLACK,self.title.rect.topleft[0]-1.5*self.button_width,
@@ -511,13 +511,13 @@ class Loader():
 				elif self.prev_screen == "PAUSE":
 					self.pauseScreen()
 			elif self.journey in self.buttonList and self.journey.isOver(pygame.mouse.get_pos()):
-				gameui.GameUI(True,"JOURNEY").run()
+				gameui.GameUI(True,constants.GameMode.JOURNEY).run()
 			elif self.sprint in self.buttonList and self.sprint.isOver(pygame.mouse.get_pos()):
-				gameui.GameUI(True,"SPRINT").run()
+				gameui.GameUI(True,constants.GameMode.SPRINT).run()
 			elif self.zen in self.buttonList and self.zen.isOver(pygame.mouse.get_pos()):
-				gameui.GameUI(True,"ZEN").run()
+				gameui.GameUI(True,constants.GameMode.ZEN).run()
 			elif self.versus in self.buttonList and self.versus.isOver(pygame.mouse.get_pos()):
-				gameui.GameUI(True,"VERSUS").run()
+				gameui.GameUI(True,constants.GameMode.VERSUS).run()
 			elif self.gohome in self.buttonList and self.gohome.isOver(pygame.mouse.get_pos()):
 				self.resetLists()
 				self.titleScreen()
@@ -527,27 +527,27 @@ class Loader():
 			elif self.restart in self.buttonList and self.restart.isOver(pygame.mouse.get_pos()):
 				gameui.GameUI(True,self.game_mode).run()
 			elif self.rotate_cw in self.buttonList and self.rotate_cw.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.rotate_cw,"ROTATE_CW")
+				self.changeControl(self.rotate_cw,constants.Action.ROTATE_CW)
 			elif self.rotate_ccw in self.buttonList and self.rotate_ccw.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.rotate_ccw,"ROTATE_CCW")
+				self.changeControl(self.rotate_ccw,constants.Action.ROTATE_CCW)
 			elif self.rotate_180 in self.buttonList and self.rotate_180.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.rotate_180,"ROTATE_180")
+				self.changeControl(self.rotate_180,constants.Action.ROTATE_180)
 			elif self.shift_left in self.buttonList and self.shift_left.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.shift_left,"SHIFT_LEFT")
+				self.changeControl(self.shift_left,constants.Action.SHIFT_LEFT)
 			elif self.shift_right in self.buttonList and self.shift_right.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.shift_right,"SHIFT_RIGHT")
+				self.changeControl(self.shift_right,constants.Action.SHIFT_RIGHT)
 			elif self.soft_drop in self.buttonList and self.soft_drop.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.soft_drop,"SOFT_DROP")
+				self.changeControl(self.soft_drop,constants.Action.SOFT_DROP)
 			elif self.hard_drop in self.buttonList and self.hard_drop.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.hard_drop,"HARD_DROP")
+				self.changeControl(self.hard_drop,constants.Action.HARD_DROP)
 			elif self.swap_hold in self.buttonList and self.swap_hold.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.swap_hold,"SWAP_HOLD")
+				self.changeControl(self.swap_hold,constants.Action.SWAP_HOLD)
 			elif self.reset in self.buttonList and self.reset.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.reset,"RESET")
+				self.changeControl(self.reset,constants.Action.RESET)
 			elif self.activate_zone in self.buttonList and self.activate_zone.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.activate_zone,"ACTIVATE_ZONE")
+				self.changeControl(self.activate_zone,constants.Action.ACTIVATE_ZONE)
 			elif self.pause in self.buttonList and self.pause.isOver(pygame.mouse.get_pos()):
-				self.changeControl(self.pause,"PAUSE")
+				self.changeControl(self.pause,constants.Action.PAUSE)
 		elif event.type == pygame.KEYDOWN:
 			for box in self.inputBoxList:
 				box.handle_event(event)

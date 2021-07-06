@@ -4,11 +4,11 @@ garbageTable = {
 	"":0,
 	"SINGLE":0,
 	"MINI T-SPIN":0,
-	"MINI T-SPIN SINGLE":1,
+	"MINI T-SPIN SINGLE":2,
 	"DOUBLE":1,
 	"T-SPIN":0,
 	"MINI T-SPIN DOUBLE":4,
-	"TRIPLE":2,
+	"TRIPLE":3,
 	"B2B MINI T-SPIN DOUBLE":5,
 	"QUADRUPLE":4,
 	"T-SPIN SINGLE":2,
@@ -19,6 +19,20 @@ garbageTable = {
 	"B2B T-SPIN DOUBLE":5,
 	"B2B T-SPIN TRIPLE":7,
 	"PERFECT CLEAR":10
+}
+
+comboTable = {
+	1:0,
+	2:1,
+	3:1,
+	4:2,
+	5:2,
+	6:3,
+	7:3,
+	8:4,
+	9:4,
+	10:4,
+	11:5 # >= 11 all +5
 }
 
 scoringTable = {

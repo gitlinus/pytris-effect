@@ -6,7 +6,7 @@ import numpy as np
 import math
 
 from . import loader
-from .utils import config
+from .utils import config, constants
 from .pane import Pane
 
 
@@ -14,7 +14,7 @@ class GameUI:
 
     def __init__(self, 
                  graphics_mode=True,
-                 game_mode="ZEN",
+                 game_mode=constants.GameMode.ZEN,
                  **kwargs):
         # (TODO): load pane hierarchy from config file
         self.panes = []
@@ -30,7 +30,7 @@ class GameUI:
         pygame.display.set_caption('Pytris Effect')
 
         # for now, we replicate the original game using one pane that takes up the entire screen
-        if game_mode != "VERSUS":
+        if game_mode != constants.GameMode.VERSUS:
             self.panes.append(Pane(
                 pygame,
                 (0, 0, self.screen_size[0], self.screen_size[1]),
@@ -58,8 +58,8 @@ class GameUI:
 
     def procKey(self, key_event, key_press):
         if key_event == pygame.KEYDOWN:
-            if key_press in config.key2action:  # (TODO): use enums instead of string constants
-                if config.key2action[key_press] == "PAUSE" and self.game_mode != "VERSUS":
+            if key_press in config.key2action:
+                if config.key2action[key_press] == constants.Action.PAUSE and self.game_mode != constants.GameMode.VERSUS:
                     print("PAUSE")
                     loader.Loader(scene="PAUSE", prev="PAUSE").run()
                     self.updateConfig()
@@ -85,9 +85,9 @@ class GameUI:
             loader.Loader(scene="GAME OVER",game_mode=player_board.m.game_mode,objective=str(player_board.m.score)).run()
         elif player_board.objectiveMet():
             objective = ""
-            if player_board.m.game_mode == "SPRINT":
+            if player_board.m.game_mode == constants.GameMode.SPRINT:
                 objective = player_board.sprint_time
-            elif player_board.m.game_mode == "JOURNEY":
+            elif player_board.m.game_mode == constants.GameMode.JOURNEY:
                 objective = str(player_board.m.score)
             loader.Loader(scene="END SCREEN",game_mode=player_board.m.game_mode,objective=objective).run()
 

@@ -3,6 +3,7 @@ import sys
 from . import tetromino
 from . import rotations
 from . import scoring
+from . import constants
 
 class Matrix:
 	# colour and index assignment
@@ -36,7 +37,7 @@ class Matrix:
 		'Z':[(0,3),(0,4),(1,4),(1,5)]
 	}
 
-	def __init__(self, game_mode="ZEN", screen_dim=None): 
+	def __init__(self, game_mode=constants.GameMode.ZEN, screen_dim=None): 
 		
 		self.screen_dim = screen_dim
 		self.mino_dim = 2 * screen_dim[1] // 60 # dimensions in number of pixels (only used for GUI) # matrix height should be roughly 2/3 of screen height
@@ -70,26 +71,26 @@ class Matrix:
 		self.setup()
 
 	def setup(self):
-		if self.game_mode == "ZEN":
+		if self.game_mode == constants.GameMode.ZEN:
 			self.objective = None
-		elif self.game_mode == "SPRINT":
+		elif self.game_mode == constants.GameMode.SPRINT:
 			self.objective = 40
-		elif self.game_mode == "JOURNEY":
+		elif self.game_mode == constants.GameMode.JOURNEY:
 			self.objective = 150
 			self.level = 1
-		elif self.game_mode == "VERSUS":
+		elif self.game_mode == constants.GameMode.VERSUS:
 			self.objective = None
 		else:
 			raise Exception("Unknown Game Mode")
 
 	def gameOverProcess(self):
 		if self.game_over:
-			if self.game_mode == "ZEN":
+			if self.game_mode == constants.GameMode.ZEN:
 				self.resetMatrix(False,False)
 				self.addTetromino()
-			elif self.game_mode == "SPRINT":
+			elif self.game_mode == constants.GameMode.SPRINT:
 				pass
-			elif self.game_mode == "JOURNEY":
+			elif self.game_mode == constants.GameMode.JOURNEY:
 				pass
 
 	def dim(self):
@@ -288,7 +289,7 @@ class Matrix:
 			res.insert(0,np.zeros(self.matrix.shape[1]))
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
-		if self.game_mode == "JOURNEY":
+		if self.game_mode == constants.GameMode.JOURNEY:
 			self.level = self.lines_cleared//10 + 1
 		if self.objective is not None:
 			if self.lines_cleared >= self.objective:
