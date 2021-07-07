@@ -1,7 +1,7 @@
 from .utils import config, matrix, constants
 import numpy as np
 import math
-
+import os
 
 # text labels beside matrix
 class Label:
@@ -336,6 +336,9 @@ class GameState:
                             matrix_left_top[1] + (5 + i) * self.font_size)), "topright"))
             for msg in self.m.clear_text:
                 msg.draw(self.screen)
+            
+            self.playClearSfx() # play sfx
+
         else:
             if self.m.clear_flag is not None:
                 if self.getTick() - self.m.clear_flag <= 2000:  # show for 2 seconds max
@@ -345,6 +348,63 @@ class GameState:
                     self.m.clear_flag = None
             if self.m.prev_clear_text == ['']:
                 self.m.track_clear_text.clear()
+
+    def playClearSfx(self):
+        sfx_path = os.path.abspath('./pytris-effect/src/sounds/sfx')
+        sfx_file = ""
+        i = self.m.prev_clear_text[0]
+        if i=="SINGLE":
+            sfx_file = "01_single.wav"
+        elif i=="DOUBLE":
+            sfx_file = "02_double.wav"
+        elif i=="TRIPLE":
+            sfx_file = "03_triple.wav"
+        elif i=="QUADRUPLE":
+            sfx_file = "04_tetris.wav"
+        elif i=="B2B QUADRUPLE":
+            sfx_file = "05_b2btetris.wav"
+        elif i=="T-SPIN":
+            sfx_file = "06_tspin.wav"
+        elif i=="MINI T-SPIN":
+            sfx_file = "07_tspinmini.wav"
+        elif i=="T-SPIN SINGLE":
+            sfx_file = "08_tspinsingle.wav"
+        elif i=="T-SPIN DOUBLE":
+            sfx_file = "09_tspindouble.wav"
+        elif i=="T-SPIN TRIPLE":
+            sfx_file = "10_tspintriple.wav"
+        elif i=="B2B MINI T-SPIN SINGLE" or i=="B2B MINI T-SPIN DOUBLE":
+            sfx_file = "11_b2btspinmini.wav"
+        elif i=="B2B T-SPIN SINGLE":
+            sfx_file = "12_b2btspinsingle.wav"
+        elif i=="B2B T-SPIN DOUBLE":
+            sfx_file = "13_b2btspindouble.wav"
+        elif i=="B2B T-SPIN TRIPLE":
+            sfx_file = "14_b2btspintriple.wav"
+        elif i=="PERFECT CLEAR":
+            sfx_file = "16_perfectclear.wav"
+        sfx_path = os.path.join(sfx_path,sfx_file)
+        if os.path.isfile(sfx_path):
+            self.cls.mixer.Sound(sfx_path).play()
+
+    def playMoveSfx(self, move, cond=True):
+        sfx_path = os.path.abspath('./pytris-effect/src/sounds/sfx')
+        sfx_file = ""
+        if move == constants.Action.HARD_DROP:
+            sfx_file = "sfx_harddrop.wav"
+        elif move == constants.Action.ROTATE_CW or move == constants.Action.ROTATE_CCW or move == constants.Action.ROTATE_180:
+            sfx_file = "sfx_rotate.wav"
+        elif move == constants.Action.SWAP_HOLD:
+            sfx_file = "sfx_hold.wav"
+        elif move == constants.Action.SHIFT_LEFT or move == constants.Action.SHIFT_RIGHT:
+            sfx_file = "sfx_move.wav"
+        elif move == constants.Action.SOFT_DROP:
+            sfx_file = "sfx_softdrop.wav"
+        elif move == "AUTOLOCK":
+            sfx_file = "sfx_lockdown.wav"
+        sfx_path = os.path.join(sfx_path,sfx_file)
+        if os.path.isfile(sfx_path) and cond:
+            self.cls.mixer.Sound(sfx_path).play()
 
     def getZoneTimer(self):
         if self.m.zone_state:
@@ -461,6 +521,9 @@ class GameState:
                     if self.m.zoneReady():
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()
+
+                self.playMoveSfx(config.key2action[key_press])
+
         elif key_event == self.cls.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:
                 if config.key2action[key_press] == constants.Action.SHIFT_LEFT:
@@ -504,13 +567,15 @@ class GameState:
                     self.left_arr_tick = current_tick
                 else:  # set in arr
                     if current_tick - self.left_arr_tick >= self.arr:
-                        self.m.shiftLeft()
+                        cond = self.m.shiftLeft()
                         self.left_arr_tick = current_tick
                         self.getMoveStatus(tick=current_tick)
+                        self.playMoveSfx(constants.Action.SHIFT_LEFT,cond)
             elif self.shift_once:  # das duration not met, only shift tetromino once
                 self.shift_once = False
-                self.m.shiftLeft()
+                cond = self.m.shiftLeft()
                 self.getMoveStatus(tick=current_tick)
+                self.playMoveSfx(constants.Action.SHIFT_LEFT,cond)
 
         elif self.das_direction == "RIGHT" and self.right_das_tick is not None:
             if current_tick - self.right_das_tick >= self.das and keys[config.action2key[constants.Action.SHIFT_RIGHT]]:
@@ -518,13 +583,15 @@ class GameState:
                     self.right_arr_tick = current_tick
                 else:  # set in arr
                     if current_tick - self.right_arr_tick >= self.arr:
-                        self.m.shiftRight()
+                        cond = self.m.shiftRight()
                         self.right_arr_tick = current_tick
                         self.getMoveStatus(tick=current_tick)
+                        self.playMoveSfx(constants.Action.SHIFT_RIGHT,cond)
             elif self.shift_once:
                 self.shift_once = False
-                self.m.shiftRight()
+                cond = self.m.shiftRight()
                 self.getMoveStatus(tick=current_tick)
+                self.playMoveSfx(constants.Action.SHIFT_RIGHT,cond)
 
         if self.soft_drop_tick is not None and keys[
             config.action2key[constants.Action.SOFT_DROP]]:  # treat soft drop like faster gravity
@@ -532,6 +599,7 @@ class GameState:
                 self.m.softDrop()
                 self.soft_drop_tick = current_tick
                 self.getMoveStatus(tick=current_tick)
+                self.playMoveSfx(constants.Action.SOFT_DROP)
 
     def getMoveStatus(self, reset=False, tick=None):
         if self.enforce_auto_lock:
@@ -578,6 +646,7 @@ class GameState:
             if current_tick - self.prev_move_tick >= self.getLockDelay():
                 self.m.freezeTetromino()
                 self.getMoveStatus(True)
+                self.playMoveSfx("AUTOLOCK")
             else:
                 if not self.alreadyVisited():
                     self.move_cnt = 0
@@ -588,6 +657,7 @@ class GameState:
                     if self.move_cnt >= self.move_reset:
                         self.m.freezeTetromino()
                         self.getMoveStatus(True)
+                        self.playMoveSfx("AUTOLOCK")
 
     def objectiveMet(self):
         return self.m.objective_met

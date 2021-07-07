@@ -413,11 +413,11 @@ class Loader():
 		meow = True
 		for i in config.actions:
 			if meow:
-				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.topleft[0]-1.5*self.button_width, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+				self.labelList.append(Label(self.button_font, i.name, self.WHITE, (self.title.rect.topleft[0]-1.5*self.button_width, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
 				self.buttonList.append(Button(self.BLACK,self.title.rect.topleft[0]-0.5*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
 				meow = False
 			else:
-				self.labelList.append(Label(self.button_font, i, self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
+				self.labelList.append(Label(self.button_font, i.name, self.WHITE, (self.title.rect.centerx, self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2)))
 				self.buttonList.append(Button(self.BLACK,self.title.rect.centerx+1.2*self.button_width,self.title.rect.centery+self.button_height*(0.5+j)+(j+1)*self.vertical_offset/2,self.button_width*3/4,self.labelList[0].rect.height,self.button_font,self.WHITE,config.key2str(config.action2key[i])))
 				meow = True
 				j += 1

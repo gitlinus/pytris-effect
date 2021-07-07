@@ -4,6 +4,7 @@ import pyautogui
 import time
 import numpy as np
 import math
+import os
 
 from . import loader
 from .utils import config, constants
@@ -28,6 +29,12 @@ class GameUI:
         self.game_mode = game_mode
         
         pygame.display.set_caption('Pytris Effect')
+
+        # for testing music only
+        pygame.mixer.stop() # stop all previous music channels
+        self.bgm_path = os.path.abspath('./pytris-effect/src/sounds/bgm/bgm_02.ogg')
+        self.bgm = pygame.mixer.Sound(self.bgm_path)
+        self.bgm.set_volume(0.5)
 
         # for now, we replicate the original game using one pane that takes up the entire screen
         if game_mode != constants.GameMode.VERSUS:
@@ -61,11 +68,16 @@ class GameUI:
             if key_press in config.key2action:
                 if config.key2action[key_press] == constants.Action.PAUSE and self.game_mode != constants.GameMode.VERSUS:
                     print("PAUSE")
+                    pygame.mixer.pause()
                     loader.Loader(scene="PAUSE", prev="PAUSE").run()
                     self.updateConfig()
+                    pygame.mixer.unpause()
                 
 
     def run(self):
+        print("HERE")
+        self.bgm.play(loops=-1) # loop music indefinitely
+
         player_board = self.panes[0].state
         while not (player_board.gameOver() or player_board.objectiveMet()):
             events = pygame.event.get()
@@ -81,6 +93,7 @@ class GameUI:
 
         # (TODO): refactor loader into a pane
         print("GAME OVER")
+        self.bgm.stop() # stop music
         if player_board.gameOver():
             loader.Loader(scene="GAME OVER",game_mode=player_board.m.game_mode,objective=str(player_board.m.score)).run()
         elif player_board.objectiveMet():
