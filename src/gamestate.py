@@ -350,7 +350,7 @@ class GameState:
                 self.m.track_clear_text.clear()
 
     def playClearSfx(self):
-        sfx_path = os.path.abspath('./pytris-effect/src/sounds/sfx')
+        sfx_path = os.path.abspath('./src/sounds/sfx')
         sfx_file = ""
         i = self.m.prev_clear_text[0]
         if i=="SINGLE":
@@ -365,7 +365,7 @@ class GameState:
             sfx_file = "05_b2btetris.wav"
         elif i=="T-SPIN":
             sfx_file = "06_tspin.wav"
-        elif i=="MINI T-SPIN":
+        elif i=="MINI T-SPIN" or i=="MINI T-SPIN SINGLE" or i=="MINI T-SPIN DOUBLE":
             sfx_file = "07_tspinmini.wav"
         elif i=="T-SPIN SINGLE":
             sfx_file = "08_tspinsingle.wav"
@@ -388,7 +388,7 @@ class GameState:
             self.cls.mixer.Sound(sfx_path).play()
 
     def playMoveSfx(self, move, cond=True):
-        sfx_path = os.path.abspath('./pytris-effect/src/sounds/sfx')
+        sfx_path = os.path.abspath('./src/sounds/sfx')
         sfx_file = ""
         if move == constants.Action.HARD_DROP:
             sfx_file = "sfx_harddrop.wav"
@@ -522,7 +522,8 @@ class GameState:
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()
 
-                self.playMoveSfx(config.key2action[key_press])
+                cond = config.key2action[key_press] != constants.Action.SHIFT_LEFT and config.key2action[key_press] != constants.Action.SHIFT_RIGHT
+                self.playMoveSfx(config.key2action[key_press],cond)
 
         elif key_event == self.cls.KEYUP:  # reset das, arr, and soft drop
             if key_press in config.key2action:

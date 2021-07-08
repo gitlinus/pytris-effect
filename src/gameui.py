@@ -32,9 +32,10 @@ class GameUI:
 
         # for testing music only
         pygame.mixer.stop() # stop all previous music channels
-        self.bgm_path = os.path.abspath('./pytris-effect/src/sounds/bgm/bgm_02.ogg')
-        self.bgm = pygame.mixer.Sound(self.bgm_path)
-        self.bgm.set_volume(0.5)
+        self.bgm_path = os.path.abspath('./src/sounds/bgm/bgm_02.ogg')
+        if os.path.isfile(self.bgm_path): 
+            self.bgm = pygame.mixer.Sound(self.bgm_path)
+            self.bgm.set_volume(0.5)
 
         # for now, we replicate the original game using one pane that takes up the entire screen
         if game_mode != constants.GameMode.VERSUS:
@@ -75,7 +76,6 @@ class GameUI:
                 
 
     def run(self):
-        print("HERE")
         self.bgm.play(loops=-1) # loop music indefinitely
 
         player_board = self.panes[0].state
