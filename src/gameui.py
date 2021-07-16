@@ -87,8 +87,12 @@ class GameUI:
                 elif event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                     self.procKey(event.type, event.key)
 
-            for pane in self.panes:
-                pane.render(events)
+            for i in range(len(self.panes)):
+                if i==0:
+                    self.panes[i].render(events) # only pass events to first matrix
+                else:
+                    self.panes[i].render()
+
             pygame.display.flip()
 
         # (TODO): refactor loader into a pane

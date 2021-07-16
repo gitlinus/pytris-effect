@@ -29,5 +29,12 @@ then
 		source run.sh
 	fi
 else
-	echo "Please change working directory to pytris-effect and rexecute"
+	cd "$(dirname "${BASH_SOURCE[0]}")"
+	current_dir=$(basename $PWD)
+	if [ $current_dir == "pytris-effect" ]
+	then
+		source run.sh
+	else
+		echo "pytris-effect repository missing"
+	fi
 fi

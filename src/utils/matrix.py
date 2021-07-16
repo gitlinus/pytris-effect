@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import random
 from . import tetromino
 from . import rotations
 from . import scoring
@@ -39,11 +40,12 @@ class Matrix:
 
 	def __init__(self, game_mode=constants.GameMode.ZEN, screen_dim=None): 
 		
-		self.screen_dim = screen_dim
-		self.mino_dim = 2 * screen_dim[1] // 60 # dimensions in number of pixels (only used for GUI) # matrix height should be roughly 2/3 of screen height
-		self.width = self.mino_dim * 10 # dimensions in number of pixels (only used for GUI)
-		self.height = self.mino_dim * 20 # dimensions in number of pixels (only used for GUI)
-		self.topleft = (screen_dim[0] - self.width) // 2, (screen_dim[1] - self.height) // 2 # position of the topleft coordinates of the matrix (only used for GUI)
+		if screen_dim is not None:
+			self.screen_dim = screen_dim
+			self.mino_dim = 2 * screen_dim[1] // 60 # dimensions in number of pixels (only used for GUI) # matrix height should be roughly 2/3 of screen height
+			self.width = self.mino_dim * 10 # dimensions in number of pixels (only used for GUI)
+			self.height = self.mino_dim * 20 # dimensions in number of pixels (only used for GUI)
+			self.topleft = (screen_dim[0] - self.width) // 2, (screen_dim[1] - self.height) // 2 # position of the topleft coordinates of the matrix (only used for GUI)
 		self.matrix = np.zeros((22,10),dtype=int)
 		self.level = None
 		self.score = 0
@@ -342,7 +344,26 @@ class Matrix:
 			self.placeTetromino()
 
 	def appendGarbage(self, numLines):
-		pass
+		prev_hole_pos = None
+		if self.matrix[21].sum() == 72: # last row is a garbage line (yucky but works for now)
+			for i in range(10):
+				if self.matrix[21,i] == 0:
+					prev_hole_pos = i
+		hole_candidates = [0,1,2,3,4,5,6,7,8,9] # 0 to 9 inclusive
+		if prev_hole_pos is not None:
+			hole_candidates.remove(prev_hole_pos)
+		random.shuffle(hole_candidates)
+		hole_pos = hole_candidates[0]
+		garbage = np.ones(self.matrix.shape[1]) * 8
+		garbage[hole_pos] = 0
+		res = []
+		for i in range(numLines):
+			res.append(garbage)
+		for i in reversed(self.matrix):
+			res.insert(0,i)
+			if len(res) == self.matrix.shape[0]:
+				break
+		self.matrix = np.asarray(res,dtype=int)
 
 	def resetMatrix(self,clear_lines=True,clear_score=True):
 		temp1 = 0
