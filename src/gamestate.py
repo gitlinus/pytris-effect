@@ -55,6 +55,7 @@ class GameState:
         self.prev_move_tick = None
         self.move_cnt = 0
         self.enforce_lock_delay = False
+        self.hold_available = False # for sfx use only
 
         self.use_graphics = graphic_mode
         if self.use_graphics:
@@ -394,7 +395,7 @@ class GameState:
             sfx_file = "sfx_harddrop.wav"
         elif move == constants.Action.ROTATE_CW or move == constants.Action.ROTATE_CCW or move == constants.Action.ROTATE_180:
             sfx_file = "sfx_rotate.wav"
-        elif move == constants.Action.SWAP_HOLD:
+        elif move == constants.Action.SWAP_HOLD and self.hold_available: # cant be matrix's hold_available variable because hold is processed before sfx plays
             sfx_file = "sfx_hold.wav"
         elif move == constants.Action.SHIFT_LEFT or move == constants.Action.SHIFT_RIGHT:
             sfx_file = "sfx_move.wav"
@@ -678,6 +679,8 @@ class GameState:
             self.game_start_tick = self.getTick()
             self.start_tick = self.game_start_tick
             self.m.addTetromino()
+
+        self.hold_available = self.m.hold_available # for hold sfx 
 
         for event in events:
             if event.type == self.cls.KEYDOWN or event.type == self.cls.KEYUP:

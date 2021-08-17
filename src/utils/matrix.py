@@ -169,8 +169,8 @@ class Matrix:
 			self.mino_locations = self.spawnLocations[self.current_tetromino].copy()
 
 			for i in self.mino_locations: 
-				if self.matrix[i[0],i[1]] != 0:
-					self.leaveZone()
+				if self.matrix[i[0],i[1]] != 0: # check for topping out
+					self.leaveZone(topped_out=True)
 
 			self.placeTetromino()
 			self.hold_available = True # make hold available again
@@ -198,7 +198,7 @@ class Matrix:
 		else:
 			for i in self.mino_locations: 
 				if self.matrix[i[0],i[1]] != 0:
-					self.leaveZone()
+					self.leaveZone(topped_out=True)
 
 		self.placeTetromino()
 		self.hold_available = False
@@ -325,7 +325,7 @@ class Matrix:
 			self.zone_state = True
 			self.prev_clear_text.clear()
 
-	def leaveZone(self):
+	def leaveZone(self, topped_out=False):
 		if self.zone_state:
 			self.current_zone = 0
 			self.zone_state = False
@@ -333,7 +333,8 @@ class Matrix:
 			self.score += score_incr
 			self.prev_clear_text = clear_text
 			print(self.prev_clear_text)
-			self.removeTetromino()
+			if not topped_out:
+				self.removeTetromino()
 			res = []
 			for i in range(self.matrix.shape[0]): # remove zone lines
 				if not np.all((self.matrix[i] > 0)): 
@@ -341,7 +342,8 @@ class Matrix:
 			while len(res) < self.matrix.shape[0]:
 				res.insert(0,np.zeros(self.matrix.shape[1]))
 			self.matrix = np.asarray(res,dtype=int)
-			self.placeTetromino()
+			if not topped_out:
+				self.placeTetromino()
 
 	def appendGarbage(self, numLines):
 		prev_hole_pos = None
