@@ -5,7 +5,8 @@ Screenshot:
 ![Screenshot](./images/screenshot.png)
 
 Gameplay demo:
-![Gameplay demo](./demos/demo.mov)
+
+https://user-images.githubusercontent.com/42019089/129650803-47af6850-022c-48bf-8c37-5881fb5345e6.mov
 
 Features:
 - SRS rotation system with 180° spins
@@ -24,7 +25,8 @@ Details on the zone mechanic:
 - When zone is activated, the matrix glows blue and you have 20 seconds to clear as many lines as possible to increase your score dramatically!
 
 Zone demo:
-![Zone demo](./demos/zone_demo.mov)
+
+https://user-images.githubusercontent.com/42019089/129650947-991cfb9e-902a-43c2-a080-2f6c8723e455.mov
 
 Notes:
 - In Pytris Effect, the top out condition is determined by whether the spawning space of the next incoming tetromino is occupied 
