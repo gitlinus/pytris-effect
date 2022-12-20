@@ -9,7 +9,7 @@ import os
 from . import loader
 from .utils import config, constants
 from .pane import Pane
-
+from .bots.controller import BotController
 
 class GameUI:
 
@@ -59,6 +59,10 @@ class GameUI:
                 game_mode=game_mode
             ))
 
+        # attach a bot controller to the right pane
+        self.ctrl = BotController(bot="RandomBot", pps=2)
+        self.ctrl.bind(self.panes[0].state)
+
     def updateConfig(self):
         self.das = config.das
         self.arr = config.arr
@@ -77,6 +81,7 @@ class GameUI:
 
     def run(self):
         self.bgm.play(loops=-1) # loop music indefinitely
+        self.ctrl.start() # start bots
 
         player_board = self.panes[0].state
         while not (player_board.gameOver() or player_board.objectiveMet()):
@@ -88,19 +93,23 @@ class GameUI:
                     self.procKey(event.type, event.key)
 
             for i in range(len(self.panes)):
-                if i==0:
+                if False: # i==0:
                     self.panes[i].render(events) # only pass events to first matrix
-                else:
-                    self.panes[i].render()
+                else: # hack: just control all panes with the bot
+                    with self.ctrl.lock:
+                        bot_events = self.ctrl.queue
+                        self.ctrl.queue = []
+                    self.panes[i].render(bot_events)
 
             pygame.display.flip()
 
         # (TODO): refactor loader into a pane
         print("GAME OVER")
         self.bgm.stop() # stop music
+        self.ctrl.end() # end bots
         if player_board.gameOver():
             loader.Loader(scene="GAME OVER",game_mode=player_board.m.game_mode,objective=str(player_board.m.score)).run()
-        elif player_board.objectiveMet():
+        elif player_board.objectiveMet() or self.panes[-1].state.gameOver():
             objective = ""
             if player_board.m.game_mode == constants.GameMode.SPRINT:
                 objective = player_board.sprint_time
