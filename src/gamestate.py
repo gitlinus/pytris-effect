@@ -1,3 +1,4 @@
+import copy
 from .utils import config, matrix, constants
 import numpy as np
 import math
@@ -57,6 +58,9 @@ class GameState:
         self.enforce_lock_delay = False
         self.hold_available = False # for sfx use only
 
+        self.game_mode = game_mode
+        self.log_buffer = dict() # logging what happens during a render phase
+
         self.use_graphics = graphic_mode
         if self.use_graphics:
 
@@ -89,6 +93,9 @@ class GameState:
             self.ticks = 0
             colour_map = lambda x: self.m.index2rgb[x]
             self.vec_map = np.vectorize(colour_map)
+
+    def getMatrix(self):
+        return self.m.matrix
 
     def drawMatrix(self):
         """When using graphics, draw the board. When using api, return the board"""
@@ -454,32 +461,39 @@ class GameState:
             return self.its_for_lock
 
     def getFixedInput(self, key_event, key_press):  # for single actions (hard drop, rotations, swap hold)
-
+        DBG = False
         # no das when using env-mode
         if key_event == self.cls.KEYDOWN:
             if key_press in config.key2action:
                 if config.key2action[key_press] == constants.Action.HARD_DROP:
                     self.m.hardDrop()
-                    print("HARD_DROP")
+                    if DBG:
+                        print("HARD_DROP")
                     self.getMoveStatus(True)
                 elif config.key2action[key_press] == constants.Action.ROTATE_CW:
                     self.m.rotateCW()
-                    print("ROTATE_CW")
+                    if DBG:
+                        print("ROTATE_CW")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.ROTATE_CCW:
                     self.m.rotateCCW()
-                    print("ROTATE_CCW")
+                    if DBG:
+                        print("ROTATE_CCW")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.ROTATE_180:
                     self.m.rotate180()
-                    print("ROTATE_180")
+                    if DBG:
+                        print("ROTATE_180")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.SWAP_HOLD:
                     self.m.swapHold()
-                    print("SWAP_HOLD")
+                    if DBG:
+                        print("SWAP_HOLD")
                     self.getMoveStatus(True)
+                    self.log_buffer["piece_placed"] = False
                 elif config.key2action[key_press] == constants.Action.SHIFT_LEFT:
-                    print("SHIFT_LEFT")
+                    if DBG:
+                        print("SHIFT_LEFT")
                     if self.use_graphics:
                         self.shift_once = True
                         self.das_direction = "LEFT"
@@ -494,7 +508,8 @@ class GameState:
                         self.m.shiftLeft()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.SHIFT_RIGHT:
-                    print("SHIFT_RIGHT")
+                    if DBG:
+                        print("SHIFT_RIGHT")
                     if self.use_graphics:
                         self.shift_once = True
                         self.das_direction = "RIGHT"
@@ -509,16 +524,19 @@ class GameState:
                         self.m.shiftRight()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.SOFT_DROP:
-                    print("SOFT_DROP")
+                    if DBG:
+                        print("SOFT_DROP")
                     self.soft_drop_tick = self.getTick()
                     if not self.use_graphics:
                         self.m.softDrop()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.RESET:
-                    print("RESET")
+                    if DBG:
+                        print("RESET")
                     self.reset()
                 elif config.key2action[key_press] == constants.Action.ACTIVATE_ZONE:
-                    print("ACTIVATE_ZONE")
+                    if DBG:
+                        print("ACTIVATE_ZONE")
                     if self.m.zoneReady():
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()
@@ -626,6 +644,8 @@ class GameState:
                 self.prev_move_tick = None if self.use_graphics else self.getTick()
                 self.enforce_lock_delay = False
                 self.move_cnt = 0
+
+                self.log_buffer["piece_placed"] = True
             else:
                 self.prev_move_tick = tick
                 self.move_cnt += 1 if self.enforce_lock_delay else 0
@@ -689,6 +709,15 @@ class GameState:
         if not self.m.game_mode == constants.GameMode.ZEN:
             self.game_start_tick = self.getTick()
 
+    def processEvents(self, events=[]):
+        self.log_buffer.clear()
+        for event in events:
+            if event.type == self.cls.KEYDOWN or event.type == self.cls.KEYUP:
+                self.getFixedInput(event.type, event.key)
+
+        self.getContinuousInput()
+
+
     def render(self, events=[]):
         if self.game_start_tick is None:
             # initialize game
@@ -698,11 +727,8 @@ class GameState:
 
         self.hold_available = self.m.hold_available # for hold sfx 
 
-        for event in events:
-            if event.type == self.cls.KEYDOWN or event.type == self.cls.KEYUP:
-                self.getFixedInput(event.type, event.key)
+        self.processEvents(events)
 
-        self.getContinuousInput()
         self.enforceAutoLock()
         self.drawMatrix()
         self.drawGhost()
@@ -726,3 +752,48 @@ class GameState:
         self.das = config.das
         self.arr = config.arr
         self.soft_drop_speed = config.soft_drop_speed
+
+    def get_copy(self, **kwargs):
+        g = GameState(
+            cls=self.cls,
+            draw=self.draw,
+            graphic_mode=self.use_graphics,
+            game_mode=self.game_mode,
+            **kwargs    
+        )
+
+        # copy over any state variables
+        g.gravity = self.gravity
+        g.das = self.das
+        g.arr = self.arr
+        g.soft_drop_speed = self.soft_drop_speed
+
+        g.das_direction = self.das_direction
+        g.left_das_tick = self.left_das_tick
+        g.right_das_tick = self.right_das_tick
+        g.left_arr_tick = self.left_arr_tick
+        g.right_arr_tick = self.right_arr_tick
+        g.soft_drop_tick = self.soft_drop_tick
+        g.shift_once = self.shift_once
+        g.cancel_das = self.cancel_das
+
+        g.game_start_tick = self.game_start_tick
+        g.start_tick = self.start_tick
+        g.start_zone_tick = self.start_zone_tick
+        g.sprint_time = self.sprint_time
+        g.ghostPiece = self.ghostPiece
+        g.showGrid = self.showGrid
+
+        g.enforce_auto_lock = self.enforce_auto_lock
+        g.move_reset = self.move_reset
+        g.lock_delay = self.lock_delay
+        g.prev_move_tick = self.prev_move_tick
+        g.move_cnt = self.move_cnt
+        g.enforce_lock_delay = self.enforce_lock_delay
+        g.hold_available = self.hold_available
+
+        g.log_buffer = self.log_buffer
+        g.m = copy.deepcopy(self.m)
+        g.visited = copy.deepcopy(self.visited)
+
+        return g

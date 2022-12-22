@@ -1,5 +1,6 @@
 from . import bot as tetris_bots
 import threading
+import time
 
 # goal is to separate interface from logic
 class BotController:
@@ -27,12 +28,15 @@ class BotController:
 
     def move(self):
         # places a piece
-        if not self.done:
-            threading.Timer(1.0 / self.pps, self.move).start()
-            moves = self.bot.get_move(self.gamestate)
-            with self.lock:
-                self.queue.extend(moves)
-            # self.gamestate.render(events=moves)
+        while not self.done:
+            try:
+                moves = self.bot.get_move(self.gamestate)
+                with self.lock:
+                    self.queue.extend(moves)
+            except:
+                self.done = True
+
+            time.sleep(1.0 / self.pps)
 
     def start(self):
         threading.Timer(1.0 / self.pps, self.move).start()

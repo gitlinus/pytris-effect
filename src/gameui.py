@@ -60,7 +60,7 @@ class GameUI:
             ))
 
         # attach a bot controller to the right pane
-        self.ctrl = BotController(bot="RandomBot", pps=2)
+        self.ctrl = BotController(bot="HeuristicBot", pps=0.25)
         self.ctrl.bind(self.panes[0].state)
 
     def procKey(self, key_event, key_press):
@@ -94,7 +94,13 @@ class GameUI:
                     with self.ctrl.lock:
                         bot_events = self.ctrl.queue
                         self.ctrl.queue = []
-                    self.panes[i].render(bot_events)
+                    
+                    for ctl in bot_events:
+                        print("pog")
+                        getattr(self.panes[i].state.m, ctl)()
+                        # self.panes[i].processEvents([ctl])
+
+                    self.panes[i].render()
 
             pygame.display.flip()
 
