@@ -10,7 +10,10 @@ from . import loader
 from .utils import config, constants
 from .pane import Pane
 from .bots.controller import BotController
+<<<<<<< HEAD
 from .utils.logger import logger
+=======
+>>>>>>> da9228960829ef7bb9160916e13c32bae04a3696
 
 # hack:
 default_state_dict = {
@@ -71,11 +74,14 @@ class GameUI:
         # attach a bot controller to the right pane
         self.ctrl = BotController(bot="HeuristicBot", pps=4.)
         self.ctrl.bind(self.panes[0].state)
+<<<<<<< HEAD
 
     def updateConfig(self):
         self.das = config.das
         self.arr = config.arr
         self.soft_drop_speed = config.soft_drop_speed
+=======
+>>>>>>> da9228960829ef7bb9160916e13c32bae04a3696
 
     def procKey(self, key_event, key_press):
         if key_event == pygame.KEYDOWN:
@@ -84,7 +90,7 @@ class GameUI:
                     logger.info("PAUSE")
                     pygame.mixer.pause()
                     loader.Loader(scene="PAUSE", prev="PAUSE").run()
-                    self.updateConfig()
+                    self.panes[0].updateGameStateConfig()
                     pygame.mixer.unpause()
                 
 
@@ -108,6 +114,14 @@ class GameUI:
                     with self.ctrl.lock:
                         bot_events = self.ctrl.queue
                         self.ctrl.queue = []
+<<<<<<< HEAD
+=======
+                    
+                    # for ctl in bot_events:
+                    #     print(ctl)
+                    #     getattr(self.panes[i].state.m, ctl)()
+                    #     # self.panes[i].processEvents([ctl])
+>>>>>>> da9228960829ef7bb9160916e13c32bae04a3696
 
                     # self.panes[i].state.getMoveStatus(True)
                     # self.panes[i].render()
