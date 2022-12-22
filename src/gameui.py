@@ -59,11 +59,6 @@ class GameUI:
                 game_mode=game_mode
             ))
 
-    def updateConfig(self):
-        self.das = config.das
-        self.arr = config.arr
-        self.soft_drop_speed = config.soft_drop_speed
-
     def procKey(self, key_event, key_press):
         if key_event == pygame.KEYDOWN:
             if key_press in config.key2action:
@@ -71,7 +66,7 @@ class GameUI:
                     print("PAUSE")
                     pygame.mixer.pause()
                     loader.Loader(scene="PAUSE", prev="PAUSE").run()
-                    self.updateConfig()
+                    self.panes[0].updateGameStateConfig()
                     pygame.mixer.unpause()
                 
 

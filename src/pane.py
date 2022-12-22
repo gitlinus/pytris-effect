@@ -90,3 +90,5 @@ class Pane:
         for pane in self.panes:
             pane.render(events)
 
+    def updateGameStateConfig(self):
+        self.state.updateConfig()

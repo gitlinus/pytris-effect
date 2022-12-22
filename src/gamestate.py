@@ -570,6 +570,13 @@ class GameState:
                 else:  # set in arr
                     if current_tick - self.left_arr_tick >= self.arr:
                         cond = self.m.shiftLeft()
+                        if(self.arr == 0):
+                            while(self.m.shiftLeft()):
+                                continue
+                        else:
+                            for i in range( (current_tick - self.left_arr_tick) // self.arr):
+                                if(self.m.shiftLeft() == False):
+                                    break
                         self.left_arr_tick = current_tick
                         self.getMoveStatus(tick=current_tick)
                         self.playMoveSfx(constants.Action.SHIFT_LEFT,cond)
@@ -586,6 +593,13 @@ class GameState:
                 else:  # set in arr
                     if current_tick - self.right_arr_tick >= self.arr:
                         cond = self.m.shiftRight()
+                        if(self.arr == 0):
+                            while(self.m.shiftRight()):
+                                continue
+                        else:
+                            for i in range( (current_tick - self.right_arr_tick) // self.arr):
+                                if(self.m.shiftRight() == False):
+                                    break
                         self.right_arr_tick = current_tick
                         self.getMoveStatus(tick=current_tick)
                         self.playMoveSfx(constants.Action.SHIFT_RIGHT,cond)
@@ -598,7 +612,9 @@ class GameState:
         if self.soft_drop_tick is not None and keys[
             config.action2key[constants.Action.SOFT_DROP]]:  # treat soft drop like faster gravity
             if (current_tick - self.soft_drop_tick) >= 1000 // self.soft_drop_speed:
-                self.m.softDrop()
+                for i in range(math.floor((current_tick - self.soft_drop_tick) / 1000 * self.soft_drop_speed)):
+                    if(self.m.softDrop() == False):
+                        break
                 self.soft_drop_tick = current_tick
                 self.getMoveStatus(tick=current_tick)
                 self.playMoveSfx(constants.Action.SOFT_DROP)
@@ -705,3 +721,8 @@ class GameState:
 
         if self.m.game_mode == constants.GameMode.JOURNEY:
             self.updateGravity()
+
+    def updateConfig(self):
+        self.das = config.das
+        self.arr = config.arr
+        self.soft_drop_speed = config.soft_drop_speed
