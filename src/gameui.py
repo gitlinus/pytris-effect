@@ -11,6 +11,12 @@ from .utils import config, constants
 from .pane import Pane
 from .bots.controller import BotController
 
+# hack:
+default_state_dict = {
+    'its_per_sec': 1.0,
+    'sec_per_tick': 10,
+}
+
 class GameUI:
 
     def __init__(self, 
@@ -43,7 +49,9 @@ class GameUI:
                 pygame,
                 (0, 0, self.screen_size[0], self.screen_size[1]),
                 self.screen,
-                game_mode=game_mode
+                player=False,
+                game_mode=game_mode,
+                **default_state_dict
             ))
         else:
             self.panes.append(Pane( # player controlls left matrix only
@@ -60,7 +68,7 @@ class GameUI:
             ))
 
         # attach a bot controller to the right pane
-        self.ctrl = BotController(bot="HeuristicBot", pps=0.25)
+        self.ctrl = BotController(bot="HeuristicBot", pps=4.)
         self.ctrl.bind(self.panes[0].state)
 
     def procKey(self, key_event, key_press):
@@ -95,12 +103,14 @@ class GameUI:
                         bot_events = self.ctrl.queue
                         self.ctrl.queue = []
                     
-                    for ctl in bot_events:
-                        print("pog")
-                        getattr(self.panes[i].state.m, ctl)()
-                        # self.panes[i].processEvents([ctl])
+                    # for ctl in bot_events:
+                    #     print(ctl)
+                    #     getattr(self.panes[i].state.m, ctl)()
+                    #     # self.panes[i].processEvents([ctl])
 
-                    self.panes[i].render()
+                    # self.panes[i].state.getMoveStatus(True)
+                    # self.panes[i].render()
+                    self.panes[i].render(bot_events)
 
             pygame.display.flip()
 

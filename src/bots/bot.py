@@ -77,9 +77,8 @@ class HeuristicBot(Bot):
             
 
     def tree_search(self, gamestate):
-        state = copy.deepcopy(gamestate.m)
+        state = gamestate.m.copy()
         # tree search over the game matrix instead
-        print("TREE SEARCH")
         vis_state_space = dict()
         parent_state_space = dict()
         # action_space = list(config.key2action.keys())[:-3] # no zone key, reset, pause
@@ -95,13 +94,13 @@ class HeuristicBot(Bot):
 
             m = s.matrix
             for idx, action in enumerate(action_space):
-                res = copy.deepcopy(s)
+                res = s.copy()
                 ops = action
                 getattr(res, ops)()
 
                 t = (idx == 6)
                 if (n := res.matrix.tobytes()) not in vis_state_space:
-                    parent_state_space[n] = (m, ops)
+                    parent_state_space[n] = (m, idx)
                     vis_state_space[n] = True
                     if t:
                         cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations))
@@ -119,8 +118,8 @@ class HeuristicBot(Bot):
             seq.append(s)
 
         actions = list(reversed(seq))
-        # controls = [Output(list(config.key2action.keys())[k], t) for k in actions for t in [gamestate.cls.KEYDOWN, gamestate.cls.KEYUP]]
-        return actions # controls
+        controls = [Output(list(config.key2action.keys())[k], t) for k in actions for t in [gamestate.cls.KEYDOWN, gamestate.cls.KEYUP]]
+        return controls
 
     def get_move(self, gamestate):
         return self.tree_search(gamestate)

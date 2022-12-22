@@ -1,3 +1,4 @@
+import copy
 import random
 
 class Tetromino:
@@ -53,3 +54,11 @@ class Tetromino:
 
 	def getCurrentTetromino(self):
 		return self.current_tetromino		
+
+	def copy(self):
+		c = Tetromino(self.bagged)
+		c.hold = self.hold
+		c.current_tetromino = self.current_tetromino
+		c.queue = copy.copy(self.queue)
+
+		return c
