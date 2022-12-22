@@ -1,5 +1,6 @@
 import copy
 from .utils import config, matrix, constants
+from .utils.logger import logger
 import numpy as np
 import math
 import os
@@ -465,39 +466,33 @@ class GameState:
             return self.its_for_lock
 
     def getFixedInput(self, key_event, key_press):  # for single actions (hard drop, rotations, swap hold)
-        DBG = False
+
         # no das when using env-mode
         if key_event == self.cls.KEYDOWN:
             if key_press in config.key2action:
                 if config.key2action[key_press] == constants.Action.HARD_DROP:
                     self.m.hardDrop()
-                    if DBG:
-                        print("HARD_DROP")
+                    logger.info("HARD_DROP")
                     self.getMoveStatus(True)
                 elif config.key2action[key_press] == constants.Action.ROTATE_CW:
                     self.m.rotateCW()
-                    if DBG:
-                        print("ROTATE_CW")
+                    logger.info("ROTATE_CW")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.ROTATE_CCW:
                     self.m.rotateCCW()
-                    if DBG:
-                        print("ROTATE_CCW")
+                    logger.info("ROTATE_CCW")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.ROTATE_180:
                     self.m.rotate180()
-                    if DBG:
-                        print("ROTATE_180")
+                    logger.info("ROTATE_180")
                     self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.SWAP_HOLD:
                     self.m.swapHold()
-                    if DBG:
-                        print("SWAP_HOLD")
+                    logger.info("SWAP_HOLD")
                     self.getMoveStatus(True)
                     self.log_buffer["piece_placed"] = False
                 elif config.key2action[key_press] == constants.Action.SHIFT_LEFT:
-                    if DBG:
-                        print("SHIFT_LEFT")
+                    logger.info("SHIFT_LEFT")
                     if self.player:
                         self.shift_once = True
                         self.das_direction = "LEFT"
@@ -512,8 +507,7 @@ class GameState:
                         self.m.shiftLeft()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.SHIFT_RIGHT:
-                    if DBG:
-                        print("SHIFT_RIGHT")
+                    logger.info("SHIFT_RIGHT")
                     if self.player:
                         self.shift_once = True
                         self.das_direction = "RIGHT"
@@ -528,19 +522,16 @@ class GameState:
                         self.m.shiftRight()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.SOFT_DROP:
-                    if DBG:
-                        print("SOFT_DROP")
+                    logger.info("SOFT_DROP")
                     self.soft_drop_tick = self.getTick()
                     if not self.player:
                         self.m.softDrop()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.RESET:
-                    if DBG:
-                        print("RESET")
+                    logger.info("RESET")
                     self.reset()
                 elif config.key2action[key_press] == constants.Action.ACTIVATE_ZONE:
-                    if DBG:
-                        print("ACTIVATE_ZONE")
+                    logger.info("ACTIVATE_ZONE")
                     if self.m.zoneReady():
                         self.m.activateZone()
                         self.start_zone_tick = self.getTick()

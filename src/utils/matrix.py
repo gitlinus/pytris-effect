@@ -5,6 +5,7 @@ from . import tetromino
 from . import rotations
 from . import scoring
 from . import constants
+from .logger import logger
 
 class Matrix:
 	# colour and index assignment
@@ -301,7 +302,7 @@ class Matrix:
 		self.score += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0
 		if self.combo > 1:
 			self.prev_clear_text.append(str(self.combo-1)+" COMBO")
-		print(self.prev_clear_text)
+		logger.info(self.prev_clear_text)
 		return cnt > 0
 
 	def clearZone(self): # basically clearLines but for zone
@@ -332,7 +333,7 @@ class Matrix:
 			score_incr, clear_text = scoring.zoneScore(self.matrix)
 			self.score += score_incr
 			self.prev_clear_text = clear_text
-			print(self.prev_clear_text)
+			logger.info(self.prev_clear_text)
 			if not topped_out:
 				self.removeTetromino()
 			res = []

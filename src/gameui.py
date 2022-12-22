@@ -10,6 +10,7 @@ from . import loader
 from .utils import config, constants
 from .pane import Pane
 from .bots.controller import BotController
+from .utils.logger import logger
 
 # hack:
 default_state_dict = {
@@ -80,7 +81,7 @@ class GameUI:
         if key_event == pygame.KEYDOWN:
             if key_press in config.key2action:
                 if config.key2action[key_press] == constants.Action.PAUSE and self.game_mode != constants.GameMode.VERSUS:
-                    print("PAUSE")
+                    logger.info("PAUSE")
                     pygame.mixer.pause()
                     loader.Loader(scene="PAUSE", prev="PAUSE").run()
                     self.updateConfig()
@@ -107,11 +108,6 @@ class GameUI:
                     with self.ctrl.lock:
                         bot_events = self.ctrl.queue
                         self.ctrl.queue = []
-                    
-                    # for ctl in bot_events:
-                    #     print(ctl)
-                    #     getattr(self.panes[i].state.m, ctl)()
-                    #     # self.panes[i].processEvents([ctl])
 
                     # self.panes[i].state.getMoveStatus(True)
                     # self.panes[i].render()
@@ -120,7 +116,7 @@ class GameUI:
             pygame.display.flip()
 
         # (TODO): refactor loader into a pane
-        print("GAME OVER")
+        logger.info("GAME OVER")
         self.bgm.stop() # stop music
         self.ctrl.end() # end bots
         if player_board.gameOver():

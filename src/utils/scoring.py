@@ -1,4 +1,5 @@
 import numpy as np
+from .logger import logger
 
 garbageTable = {
 	"":0,
@@ -95,7 +96,7 @@ def filledLines(matrix): # returns number of filled lines, total lines
 	return cnt, total
 
 def isRotationMini(prev2moves):
-	print(prev2moves)
+	logger.info(prev2moves)
 	if len(prev2moves) != 2:
 		return False, False
 	if prev2moves[1][0] == "AUTOLOCK" or (prev2moves[1][0] == "TRANSLATION" and prev2moves[1][1]==0):
