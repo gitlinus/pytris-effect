@@ -1,5 +1,6 @@
 import copy
 from ..utils import config
+from ..utils.logger import logger
 import random
 import numpy as np
 
@@ -67,7 +68,7 @@ def profile(func):
         retval = func(*args, **kwargs)
         pr.disable()
         s = io.StringIO()
-        sortby = 'cumulative'
+        sortby = pstats.SortKey.CUMULATIVE # TIME
         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
         ps.print_stats()
         print(s.getvalue())
@@ -104,15 +105,23 @@ class HeuristicBot(Bot):
         cand_position = []
         positions = [state]
 
-        vis_state_space[state.matrix.tobytes()] = False
+        mb = state.matrix.tobytes()
+        vis_state_space[mb] = False
         
         while len(positions) != 0:
             s = positions[0]
             positions = positions[1:]
 
+            # lots of optimization hacks here
             m = s.matrix
+            mb = m.tobytes()
+            res = s.copy()
             for idx, action in enumerate(action_space):
-                res = s.copy()
+                # hack to reduce computation
+                if idx == 6 and mb in parent_state_space and parent_state_space[mb][1] == 5:
+                    continue
+                if idx > 0: # need to reset copy since it is different from m
+                    res = s.copy()
                 ops = action
                 getattr(res, ops)()
 

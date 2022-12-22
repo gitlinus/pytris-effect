@@ -24,7 +24,8 @@ class Tetromino:
 
 	def genNextBag(self): # 7-bag system
 		random.shuffle(self.tetrominos)
-		self.queue += self.tetrominos # ['T', 'L', 'O', 'S', 'T', 'Z', 'I']
+		# hack for deterministic ordering
+		self.queue += ['T', 'L', 'O', 'S', 'T', 'Z', 'I']
 
 	def genRandomTetromino(self): # pseudo-random system
 		idx = random.randint(0,6)
@@ -57,6 +58,3 @@ class Tetromino:
 
 	def copy(self):
 		return Tetromino(tetromino=self)
-
-		# 1.167 -> 1.014
-		# 0.712 -> 0.672

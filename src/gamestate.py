@@ -86,7 +86,6 @@ class GameState:
 
             self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
 
-        else:
         if not player:
             if not self.use_graphics:
                 self.m = matrix.Matrix()

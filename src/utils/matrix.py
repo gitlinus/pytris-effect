@@ -39,7 +39,11 @@ class Matrix:
 		'Z':[(0,3),(0,4),(1,4),(1,5)]
 	}
 
-	def __init__(self, game_mode=constants.GameMode.ZEN, screen_dim=None): 
+	def __init__(self, game_mode=constants.GameMode.ZEN, screen_dim=None, matrix=None):
+
+		if matrix is not None:
+			game_mode = matrix.game_mode
+			screen_dim = matrix.screen_dim
 		
 		if screen_dim is not None:
 			self.screen_dim = screen_dim
@@ -47,31 +51,32 @@ class Matrix:
 			self.width = self.mino_dim * 10 # dimensions in number of pixels (only used for GUI)
 			self.height = self.mino_dim * 20 # dimensions in number of pixels (only used for GUI)
 			self.topleft = (screen_dim[0] - self.width) // 2, (screen_dim[1] - self.height) // 2 # position of the topleft coordinates of the matrix (only used for GUI)
-		self.matrix = np.zeros((22,10),dtype=int)
-		self.level = None
-		self.score = 0
-		self.lines_cleared = 0
-		self.tetrominos = tetromino.Tetromino()
-		self.current_tetromino = ""
-		self.mino_locations = []
-		self.tetromino_orientation = 0 # keeps track of orientation of current tetromino (0 to 3)
-		self.hold_available = False
-		self.placed_tetromino = False # keeps track whether tetromino was placed into matrix yet
-		self.combo = 0
-		self.b2b = False
-		self.prev2moves = []
-		self.prev_clear_text = []
-		self.clear_text = [] # used by gameui
-		self.track_clear_text = [] # used by gameui
-		self.clear_flag = None # used by gameui
-		self.current_zone = 0
-		self.full_zone = 40
-		self.zone_state = False
-		self.game_over = False
+		self.matrix = matrix.matrix.copy() if matrix is not None else np.zeros((22,10),dtype=int)
+		self.level = matrix.level if matrix is not None else None
+		self.score = matrix.score if matrix is not None else 0
+		self.lines_cleared = matrix.lines_cleared if matrix is not None else 0
+		self.tetrominos = matrix.tetrominos.copy() if matrix is not None else tetromino.Tetromino()
+		self.current_tetromino = matrix.current_tetromino if matrix is not None else ""
+		self.mino_locations = copy.copy(matrix.mino_locations) if matrix is not None else []
+		self.tetromino_orientation = matrix.tetromino_orientation if matrix is not None else 0 # keeps track of orientation of current tetromino (0 to 3)
+		self.hold_available = matrix.hold_available if matrix is not None else False
+		self.placed_tetromino = matrix.placed_tetromino if matrix is not None else False # keeps track whether tetromino was placed into matrix yet
+		self.combo = matrix.combo if matrix is not None else 0
+		self.b2b = matrix.b2b if matrix is not None else False
+		self.prev2moves = copy.copy(matrix.prev2moves) if matrix is not None else []
+		self.prev_clear_text = copy.copy(matrix.prev_clear_text) if matrix is not None else []
+		self.clear_text = copy.copy(matrix.clear_text) if matrix is not None else [] # used by gameui
+		self.track_clear_text = copy.copy(matrix.track_clear_text) if matrix is not None else [] # used by gameui
+		self.clear_flag = matrix.clear_flag if matrix is not None else None # used by gameui
+		self.current_zone = matrix.current_zone if matrix is not None else 0
+		self.full_zone = matrix.full_zone if matrix is not None else 40
+		self.zone_state = matrix.zone_state if matrix is not None else False
+		self.game_over = matrix.game_over if matrix is not None else False
 		self.game_mode = game_mode
-		self.objective = None
-		self.objective_met = None
-		self.setup()
+		self.objective = matrix.objective if matrix is not None else None
+		self.objective_met = matrix.objective_met if matrix is not None else None
+		if matrix is None:
+			self.setup()
 
 	def setup(self):
 		if self.game_mode == constants.GameMode.ZEN:
@@ -380,33 +385,4 @@ class Matrix:
 		self.score = temp2
 		
 	def copy(self):
-		c = Matrix(
-			game_mode=self.game_mode,
-			screen_dim=self.screen_dim
-		)
-
-		c.matrix = self.matrix.copy()
-		c.level = self.level
-		c.score = self.score
-		c.lines_cleared = self.lines_cleared
-		c.tetrominos = self.tetrominos.copy()
-		c.current_tetromino = self.current_tetromino
-		c.mino_locations = copy.copy(self.mino_locations)
-		c.tetromino_orientation = self.tetromino_orientation
-		c.hold_available = self.hold_available
-		c.placed_tetromino = self.placed_tetromino
-		c.combo = self.combo
-		c.b2b = self.b2b
-		c.prev2moves = copy.copy(self.prev2moves)
-		c.prev_clear_text = copy.copy(self.prev_clear_text)
-		c.clear_text = copy.copy(self.clear_text)
-		c.track_clear_text = copy.copy(self.track_clear_text)
-		c.clear_flag = self.clear_flag
-		c.current_zone = self.current_zone
-		c.full_zone = self.full_zone
-		c.zone_state = self.zone_state
-		c.game_over = self.game_over
-		c.objective = self.objective
-		c.objective_met = self.objective_met
-
-		return c
+		return Matrix(matrix=self)

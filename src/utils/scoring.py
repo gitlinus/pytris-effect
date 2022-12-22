@@ -88,11 +88,20 @@ zoneTable = {
 def filledLines(matrix): # returns number of filled lines, total lines
 	cnt = 0
 	total = 0
+	# hack for performance
 	for i in range(matrix.shape[0]):
-		if np.all((matrix[i] > 0)): 
+		z = 0
+		for j in range(matrix.shape[1]):
+			z += 1 if matrix[i][j] > 0 else 0
+
+		if z == matrix.shape[1]:
 			cnt += 1
-		if not np.all((matrix[i] == 0)):
+		if z > 0:
 			total += 1
+		# if np.all((matrix[i] > 0)): 
+		# 	cnt += 1
+		# if not np.all((matrix[i] == 0)):
+		# 	total += 1
 	return cnt, total
 
 def isRotationMini(prev2moves):

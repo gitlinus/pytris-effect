@@ -28,15 +28,20 @@ class BotController:
 
     def move(self):
         # places a piece
+        elapsed = 0
         while not self.done:
             try:
+                start = time.time()
                 moves = self.bot.get_move(self.gamestate)
+                elapsed = time.time() - start
+
                 with self.lock:
                     self.queue.extend(moves)
             except:
                 self.done = True
 
-            time.sleep(1.0 / self.pps)
+            # need to do this as move calculation can take non-trivial amount of time
+            time.sleep(max(0, 1.0 / self.pps - elapsed))
 
     def start(self):
         threading.Timer(1.0 / self.pps, self.move).start()
