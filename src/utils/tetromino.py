@@ -23,7 +23,7 @@ class Tetromino:
 
 	def genNextBag(self): # 7-bag system
 		random.shuffle(self.tetrominos)
-		self.queue += self.tetrominos
+		self.queue += self.tetrominos # ['T', 'L', 'O', 'S', 'T', 'Z', 'I']
 
 	def genRandomTetromino(self): # pseudo-random system
 		idx = random.randint(0,6)
