@@ -57,6 +57,24 @@ class State:
         self.cur = cur
 
 
+import cProfile
+import io
+import pstats
+def profile(func):
+    def wrapper(*args, **kwargs):
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = func(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return wrapper# Profile foo
+
 class HeuristicBot(Bot):
     # bot with lookahead depth 1
 
@@ -75,7 +93,7 @@ class HeuristicBot(Bot):
 
         return -sm
             
-
+    @profile
     def tree_search(self, gamestate):
         state = gamestate.m.copy()
         # tree search over the game matrix instead
