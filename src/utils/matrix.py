@@ -1,5 +1,5 @@
+import copy
 import numpy as np
-import sys
 import random
 from . import tetromino
 from . import rotations
@@ -378,3 +378,34 @@ class Matrix:
 		self.lines_cleared = temp1
 		self.score = temp2
 		
+	def copy(self):
+		c = Matrix(
+			game_mode=self.game_mode,
+			screen_dim=self.screen_dim
+		)
+
+		c.matrix = self.matrix.copy()
+		c.level = self.level
+		c.score = self.score
+		c.lines_cleared = self.lines_cleared
+		c.tetrominos = self.tetrominos.copy()
+		c.current_tetromino = self.current_tetromino
+		c.mino_locations = copy.copy(self.mino_locations)
+		c.tetromino_orientation = self.tetromino_orientation
+		c.hold_available = self.hold_available
+		c.placed_tetromino = self.placed_tetromino
+		c.combo = self.combo
+		c.b2b = self.b2b
+		c.prev2moves = copy.copy(self.prev2moves)
+		c.prev_clear_text = copy.copy(self.prev_clear_text)
+		c.clear_text = copy.copy(self.clear_text)
+		c.track_clear_text = copy.copy(self.track_clear_text)
+		c.clear_flag = self.clear_flag
+		c.current_zone = self.current_zone
+		c.full_zone = self.full_zone
+		c.zone_state = self.zone_state
+		c.game_over = self.game_over
+		c.objective = self.objective
+		c.objective_met = self.objective_met
+
+		return c

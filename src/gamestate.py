@@ -21,6 +21,7 @@ class GameState:
                  cls,
                  draw,
                  graphic_mode=True,
+                 player=True,
                  game_mode=constants.GameMode.ZEN,
                  **kwargs):
 
@@ -60,6 +61,7 @@ class GameState:
 
         self.game_mode = game_mode
         self.log_buffer = dict() # logging what happens during a render phase
+        self.player = player
 
         self.use_graphics = graphic_mode
         if self.use_graphics:
@@ -83,9 +85,11 @@ class GameState:
 
             self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
 
-        else:
-            self.m = matrix.Matrix()
-            self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
+        if not player:
+            if not self.use_graphics:
+                self.m = matrix.Matrix()
+                self.visited = np.zeros((self.m.matrix.shape[0], self.m.matrix.shape[1]), dtype=int)
+            
             self.its_per_tick = kwargs['its_per_sec'] * kwargs['sec_per_tick']
             self.its_for_lock = kwargs['its_per_sec'] * self.lock_delay / 1000.0
             self.phase = 0
@@ -449,13 +453,13 @@ class GameState:
         return str(self.m.getScore())
 
     def getTick(self):
-        if self.use_graphics:
+        if self.player:
             return self.cls.time.get_ticks()
         else:
             return self.ticks
 
     def getLockDelay(self):
-        if self.use_graphics:
+        if self.player:
             return self.lock_delay
         else:
             return self.its_for_lock
@@ -494,7 +498,7 @@ class GameState:
                 elif config.key2action[key_press] == constants.Action.SHIFT_LEFT:
                     if DBG:
                         print("SHIFT_LEFT")
-                    if self.use_graphics:
+                    if self.player:
                         self.shift_once = True
                         self.das_direction = "LEFT"
                         self.left_das_tick = self.getTick()
@@ -510,7 +514,7 @@ class GameState:
                 elif config.key2action[key_press] == constants.Action.SHIFT_RIGHT:
                     if DBG:
                         print("SHIFT_RIGHT")
-                    if self.use_graphics:
+                    if self.player:
                         self.shift_once = True
                         self.das_direction = "RIGHT"
                         self.right_das_tick = self.getTick()
@@ -527,7 +531,7 @@ class GameState:
                     if DBG:
                         print("SOFT_DROP")
                     self.soft_drop_tick = self.getTick()
-                    if not self.use_graphics:
+                    if not self.player:
                         self.m.softDrop()
                         self.getMoveStatus(tick=self.getTick())
                 elif config.key2action[key_press] == constants.Action.RESET:
@@ -625,7 +629,7 @@ class GameState:
         if self.enforce_auto_lock:
             if reset:
                 self.visited.fill(0)  # reset visited array
-                self.prev_move_tick = None if self.use_graphics else self.getTick()
+                self.prev_move_tick = None if self.player else self.getTick()
                 self.enforce_lock_delay = False
                 self.move_cnt = 0
 
