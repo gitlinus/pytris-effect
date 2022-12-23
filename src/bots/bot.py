@@ -108,7 +108,7 @@ class HeuristicBot(Bot):
         mb = state.matrix.tobytes()
         vis_state_space[mb] = False
         
-        while len(positions) != 0:
+        while positions != []:
             s = positions[0]
             positions = positions[1:]
 
@@ -118,16 +118,26 @@ class HeuristicBot(Bot):
             res = s.copy()
             for idx, action in enumerate(action_space):
                 # hack to reduce computation
-                if idx == 6 and mb in parent_state_space and parent_state_space[mb][1] == 5:
+                if idx in (5, 6) and mb in parent_state_space and parent_state_space[mb][1][-1] == 5:
+                    continue
+                # hack: no consecutive spin moves (even though some kicks cannot be replicated otherwise)
+                if idx < 3 and mb in parent_state_space and parent_state_space[mb][1][-1] < 3:
                     continue
                 if idx > 0: # need to reset copy since it is different from m
                     res = s.copy()
-                ops = action
-                getattr(res, ops)()
+                if idx == 5: # sdf infinity
+                    for _ in range(20):
+                        getattr(res, action)()
+                else:
+                    ops = action
+                    getattr(res, ops)()
 
                 t = (idx == 6)
                 if (n := res.matrix.tobytes()) not in vis_state_space:
-                    parent_state_space[n] = (m, idx)
+                    if idx == 5:
+                        parent_state_space[n] = (m, [idx]*20)
+                    else:
+                        parent_state_space[n] = (m, [idx])
                     vis_state_space[n] = True
                     if t:
                         cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations))
@@ -142,7 +152,7 @@ class HeuristicBot(Bot):
         while (b := opt.tobytes()) in parent_state_space:
             p, s = parent_state_space[b]
             opt = p
-            seq.append(s)
+            seq.extend(list(reversed(s)))
 
         actions = list(reversed(seq))
         controls = [Output(list(config.key2action.keys())[k], t) for k in actions for t in [gamestate.cls.KEYDOWN, gamestate.cls.KEYUP]]

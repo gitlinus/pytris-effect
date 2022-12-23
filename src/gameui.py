@@ -69,7 +69,7 @@ class GameUI:
             ))
 
         # attach a bot controller to the right pane
-        self.ctrl = BotController(bot="HeuristicBot", pps=3.)
+        self.ctrl = BotController(bot="HeuristicBot", pps=1.)
         self.ctrl.bind(self.panes[0].state)
 
     def updateConfig(self):

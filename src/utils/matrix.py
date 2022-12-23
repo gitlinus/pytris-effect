@@ -14,18 +14,18 @@ class Matrix:
 	tetromino2index = {'I':1,'J':2,'L':3,'O':4,'S':5,'T':6,'Z':7}
 
 	tetromino2matrix = {
-		'I':np.asarray([[1,1,1,1]],dtype=int),
-		'J':np.asarray([[2,0,0],
+		'I':np.array([[1,1,1,1]],dtype=int),
+		'J':np.array([[2,0,0],
 						[2,2,2]],dtype=int),
-		'L':np.asarray([[0,0,3],
+		'L':np.array([[0,0,3],
 						[3,3,3]],dtype=int),
-		'O':np.asarray([[4,4],
+		'O':np.array([[4,4],
 						[4,4]],dtype=int),
-		'S':np.asarray([[0,5,5],
+		'S':np.array([[0,5,5],
 						[5,5,0]],dtype=int),
-		'T':np.asarray([[0,6,0],
+		'T':np.array([[0,6,0],
 						[6,6,6]],dtype=int),
-		'Z':np.asarray([[7,7,0],
+		'Z':np.array([[7,7,0],
 						[0,7,7]],dtype=int)
 	}
 
