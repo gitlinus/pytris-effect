@@ -85,9 +85,17 @@ zoneTable = {
 	22:"ICOSIDITRIS"
 }
 
-def filledLines(matrix): # returns number of filled lines, total lines
+def filledLines(matrix, row_counts=None): # returns number of filled lines, total lines
 	cnt = 0
 	total = 0
+	if row_counts is not None:
+		for c in row_counts:
+			if c == matrix.shape[1]:
+				cnt += 1
+			if c > 0:
+				total += 1
+
+		return cnt, total
 	# hack for performance
 	for i in range(matrix.shape[0]):
 		z = 0
@@ -151,8 +159,8 @@ def isTspin(matrix, mino_locations, prev2moves):
 					back_cnt += 1 if matrix[pos[0],pos[1]] else 0
 	return front_cnt + back_cnt >= 3, back_cnt == 2 and front_cnt == 1 and isMini
 
-def clearType(matrix, tetromino, mino_locations, b2b, prev2moves):
-	lines_cleared, total_lines = filledLines(matrix)
+def clearType(matrix, tetromino, mino_locations, b2b, prev2moves, row_counts=None):
+	lines_cleared, total_lines = filledLines(matrix, row_counts=row_counts)
 	clearText = []
 	b2b_next = False
 
@@ -184,9 +192,9 @@ def clearType(matrix, tetromino, mino_locations, b2b, prev2moves):
 		return clearText, b2b
 	return clearText, b2b_next
 
-def calcScore(matrix, tetromino, mino_locations, level, b2b, prev2moves): # combo, soft drop, and hard drop scores should be implemented in matrix.py
+def calcScore(matrix, tetromino, mino_locations, level, b2b, prev2moves, row_counts=None): # combo, soft drop, and hard drop scores should be implemented in matrix.py
 	score = 0
-	clearText, b2b_next = clearType(matrix,tetromino,mino_locations,b2b,prev2moves)
+	clearText, b2b_next = clearType(matrix,tetromino,mino_locations,b2b,prev2moves,row_counts=row_counts)
 	if level != None:
 		for i in clearText:
 			score += scoringTable[i] * level

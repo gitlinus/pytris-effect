@@ -50,6 +50,8 @@ move_map = [
     "swapHold"
 ]
 
+can_undo = [True, True, True, True, True, True, False, False]
+
 class State:
         
     def __init__(self, board, hold=None, cur=None):
@@ -94,9 +96,9 @@ class HeuristicBot(Bot):
 
         return -sm
             
-    @profile
+    # @profile
     def tree_search(self, gamestate):
-        state = gamestate.m.copy()
+        state = gamestate.m
         # tree search over the game matrix instead
         vis_state_space = dict()
         parent_state_space = dict()
@@ -116,28 +118,37 @@ class HeuristicBot(Bot):
             m = s.matrix
             mb = m.tobytes()
             res = s.copy()
+            log = dict()
             for idx, action in enumerate(action_space):
+                # swapHold must be the first action
+                if idx == 7 and mb in parent_state_space:
+                    continue
                 # hack to reduce computation
                 if idx in (5, 6) and mb in parent_state_space and parent_state_space[mb][1][-1] == 5:
                     continue
                 # hack: no consecutive spin moves (even though some kicks cannot be replicated otherwise)
                 if idx < 3 and mb in parent_state_space and parent_state_space[mb][1][-1] < 3:
                     continue
+                # print(action)
                 if idx > 0: # need to reset copy since it is different from m
-                    res = s.copy()
-                if idx == 5: # sdf infinity
-                    for _ in range(20):
-                        getattr(res, action)()
-                else:
-                    ops = action
-                    getattr(res, ops)()
+                    if ("moved" not in log) and ("rotated" not in log): # no change
+                        pass
+                    # elif can_undo[idx-1] and "rotated" in log:
+                    #     if s.mino_locations != res.prev_mino_locations:
+                    #         print("RIP")
+                        # print(s.mino_locations, res.prev_mino_locations)
+                        # if res.mino_locations == res.prev_mino_locations:
+                        #     print("REEEE")
+                        # res = s.copy() # .undo()
+                    else: # cannot undo last operation, so have to clone s again
+                        res = s.copy()
+                
+                ops = action
+                log = getattr(res, ops)()
 
                 t = (idx == 6)
                 if (n := res.matrix.tobytes()) not in vis_state_space:
-                    if idx == 5:
-                        parent_state_space[n] = (m, [idx]*20)
-                    else:
-                        parent_state_space[n] = (m, [idx])
+                    parent_state_space[n] = (m, [idx])
                     vis_state_space[n] = True
                     if t:
                         cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations))

@@ -10,31 +10,31 @@ Translate back
 
 rotationStates = {
 	'I':[
-		np.asarray([[0,0,0,0],
+		np.array([[0,0,0,0],
 					[1,1,1,1],
 					[0,0,0,0],
 					[0,0,0,0]],dtype=int)],
 	'J':[
-		np.asarray([[2,0,0],
+		np.array([[2,0,0],
 					[2,2,2],
 					[0,0,0],],dtype=int)],
 	'L':[
-		np.asarray([[0,0,3],
+		np.array([[0,0,3],
 					[3,3,3],
 					[0,0,0]],dtype=int)],
 	'O':[
-		np.asarray([[4,4],
+		np.array([[4,4],
 					[4,4]],dtype=int)],
 	'S':[
-		np.asarray([[0,5,5],
+		np.array([[0,5,5],
 					[5,5,0],
 					[0,0,0]],dtype=int)],
 	'T':[
-		np.asarray([[0,6,0],
+		np.array([[0,6,0],
 					[6,6,6],
 					[0,0,0]],dtype=int)],
 	'Z':[
-		np.asarray([[7,7,0],
+		np.array([[7,7,0],
 					[0,7,7],
 					[0,0,0]],dtype=int)]
 }
@@ -186,6 +186,7 @@ def getKicks(matrix, tetromino, mino_locations, state_begin, state_end):
 	return False, None, None
 
 def rotateCW(matrix, tetromino, mino_locations, orientation):
+	log = dict()
 	candidates = mino_locations.copy()
 	origin = getRelativeOrigin(tetromino,candidates,orientation)
 	for i in range(4):
@@ -200,9 +201,14 @@ def rotateCW(matrix, tetromino, mino_locations, orientation):
 		mino_locations = candidates
 	# print("STATUS CW: ")
 	# print(status)
-	return mino_locations, orientation, kick_dist
+	if status:
+		log["rotated"] = True
+	if kick_dist is not None and kick_dist > 0:
+		log["kicked"] = True
+	return mino_locations, orientation, kick_dist, log
 
 def rotateCCW(matrix, tetromino, mino_locations, orientation):
+	log = dict()
 	candidates = mino_locations.copy()
 	origin = getRelativeOrigin(tetromino,candidates,orientation)
 	for i in range(4):
@@ -217,9 +223,14 @@ def rotateCCW(matrix, tetromino, mino_locations, orientation):
 		mino_locations = candidates
 	# print("STATUS CCW: ")
 	# print(status)
-	return mino_locations, orientation, kick_dist
+	if status:
+		log["rotated"] = True
+	if kick_dist is not None and kick_dist > 0:
+		log["kicked"] = True
+	return mino_locations, orientation, kick_dist, log
 
 def rotate180(matrix, tetromino, mino_locations, orientation):
+	log = dict()
 	candidates = mino_locations.copy()
 	for i in range(2): # do 2 cw rotations
 		origin = getRelativeOrigin(tetromino,candidates,(orientation+i)%4)
@@ -233,6 +244,10 @@ def rotate180(matrix, tetromino, mino_locations, orientation):
 		orientation += 2
 		orientation %= 4
 		mino_locations = candidates
-	return mino_locations, orientation, kick_dist
+	if status:
+		log["rotated"] = True
+	if kick_dist is not None and kick_dist > 0:
+		log["kicked"] = True
+	return mino_locations, orientation, kick_dist, log
 
 genOrientations()

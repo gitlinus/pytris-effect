@@ -52,6 +52,7 @@ class Matrix:
 			self.height = self.mino_dim * 20 # dimensions in number of pixels (only used for GUI)
 			self.topleft = (screen_dim[0] - self.width) // 2, (screen_dim[1] - self.height) // 2 # position of the topleft coordinates of the matrix (only used for GUI)
 		self.matrix = matrix.matrix.copy() if matrix is not None else np.zeros((22,10),dtype=int)
+		self.row_counts = matrix.row_counts.copy() if matrix is not None else np.zeros(22, dtype=int)
 		self.level = matrix.level if matrix is not None else None
 		self.score = matrix.score if matrix is not None else 0
 		self.lines_cleared = matrix.lines_cleared if matrix is not None else 0
@@ -59,6 +60,9 @@ class Matrix:
 		self.current_tetromino = matrix.current_tetromino if matrix is not None else ""
 		self.mino_locations = copy.copy(matrix.mino_locations) if matrix is not None else []
 		self.tetromino_orientation = matrix.tetromino_orientation if matrix is not None else 0 # keeps track of orientation of current tetromino (0 to 3)
+		self.prev_tetromino = matrix.prev_tetromino if matrix is not None else ""
+		self.prev_mino_locations = copy.copy(matrix.prev_mino_locations) if matrix is not None else []
+		self.prev_mino_orientation = matrix.prev_mino_orientation if matrix is not None else 0
 		self.hold_available = matrix.hold_available if matrix is not None else False
 		self.placed_tetromino = matrix.placed_tetromino if matrix is not None else False # keeps track whether tetromino was placed into matrix yet
 		self.combo = matrix.combo if matrix is not None else 0
@@ -121,14 +125,22 @@ class Matrix:
 		if len(self.prev2moves) > 2:
 			self.prev2moves.pop(0)
 
-	def removeTetromino(self): # removes current tetromino from matrix
+	def removeTetromino(self, overwrite=True): # removes current tetromino from matrix
+		if overwrite:
+			self.prev_tetromino = self.current_tetromino
+			self.prev_mino_locations = copy.copy(self.mino_locations)
+			self.prev_mino_orientation = self.tetromino_orientation
+		# print("Prev", self.prev_tetromino, self.prev_mino_locations)
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = 0
+			self.row_counts[i[0]] -= 1
 		self.placed_tetromino = False
 
 	def placeTetromino(self): # emplaces current tetromino into matrix
+		# print("Cur", self.current_tetromino, self.mino_locations)
 		for i in self.mino_locations:
 			self.matrix[i[0],i[1]] = self.tetromino2index[self.current_tetromino]
+			self.row_counts[i[0]] += 1
 		self.placed_tetromino = True
 
 	def translateTetromino(self, drow, dcol): # translate current tetromino by drow and dcol
@@ -143,7 +155,7 @@ class Matrix:
 	def addTetromino(self): # set piece spawn location
 		if not self.zone_state:
 			# scoring
-			score_incr, clear_text, b2b_next = scoring.calcScore(self.matrix,self.current_tetromino,self.mino_locations,self.level,self.b2b,self.prev2moves)
+			score_incr, clear_text, b2b_next = scoring.calcScore(self.matrix,self.current_tetromino,self.mino_locations,self.level,self.b2b,self.prev2moves, self.row_counts)
 			self.score += score_incr
 			self.b2b = b2b_next
 			self.prev_clear_text = clear_text
@@ -184,7 +196,7 @@ class Matrix:
 
 	def swapHold(self):
 		if not self.hold_available: # check if hold is available first
-			return False
+			return dict()
 
 		self.appendPrevMoves("SWAPHOLD",None)
 
@@ -208,7 +220,7 @@ class Matrix:
 
 		self.placeTetromino()
 		self.hold_available = False
-		return True
+		return {"swapped": True}
 
 	def hardDrop(self):
 		# find largest distance that all minos can shift down by
@@ -225,46 +237,51 @@ class Matrix:
 		self.score += 2*dist
 		self.addTetromino()
 
+		return {"moved": True}
+
 	def rotateCW(self):
 		self.removeTetromino()
-		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotateCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.mino_locations, self.tetromino_orientation, kick_dist, log = rotations.rotateCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
 		self.appendPrevMoves("ROTATION",kick_dist)
 		self.placeTetromino()
+		return log
 		
 	def rotateCCW(self):
 		self.removeTetromino()
-		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotateCCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.mino_locations, self.tetromino_orientation, kick_dist, log = rotations.rotateCCW(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
 		self.appendPrevMoves("ROTATION",kick_dist)
 		self.placeTetromino()
+		return log
 
 	def rotate180(self):
 		self.removeTetromino()
-		self.mino_locations, self.tetromino_orientation, kick_dist = rotations.rotate180(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
+		self.mino_locations, self.tetromino_orientation, kick_dist, log = rotations.rotate180(self.matrix,self.current_tetromino,self.mino_locations,self.tetromino_orientation)
 		self.appendPrevMoves("ROTATION",kick_dist)
 		self.placeTetromino()
+		return log
 
 	def shiftLeft(self):
 		# check if shift is possible, then shift 1 mino left
 		for i in self.mino_locations:
 			if i[1]-1 < 0 or (self.matrix[i[0],i[1]-1] != 0 and (i[0],i[1]-1) not in self.mino_locations):
-				return False
+				return dict()
 		self.translateTetromino(0,-1)
-		return True
+		return {"moved": True}
 
 	def shiftRight(self):
 		for i in self.mino_locations:
 			if i[1]+1 >= self.matrix.shape[1] or (self.matrix[i[0],i[1]+1] != 0 and (i[0],i[1]+1) not in self.mino_locations):
-				return False
+				return dict()
 		self.translateTetromino(0,1)
-		return True
+		return {"moved": True}
 
 	def softDrop(self): # should be basically the same as gravity
 		for i in self.mino_locations:
 			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
-				return False
+				return dict()
 		self.translateTetromino(1,0)
 		self.score += 1
-		return True
+		return {"moved": True}
 
 	def touchedStack(self): # checks whether tetromino has touched the matrix stack
 		for i in self.mino_locations:
@@ -278,6 +295,15 @@ class Matrix:
 		self.appendPrevMoves("AUTOLOCK",None)
 		self.addTetromino()
 
+	def undo(self):
+		# weak undo operation
+		# does not work after line clears/multiple undos, etc.
+		self.removeTetromino(overwrite=False)
+		self.current_tetromino = self.prev_tetromino
+		self.mino_locations = self.prev_mino_locations
+		self.tetromino_orientation = self.prev_mino_orientation
+		self.placeTetromino()
+
 	def enforceGravity(self):
 		for i in self.mino_locations:
 			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
@@ -287,15 +313,39 @@ class Matrix:
 
 	def clearLines(self): # clears filled lines, adapted from tetris-bot/board.py
 		# remove current tetromino from board, clear lines, put current tetromino back
-		res, cnt = [], 0 # resultant matrix, number of lines cleared
-		for i in range(self.matrix.shape[0]):
-			if not np.all((self.matrix[i] > 0)): 
-				res.append(self.matrix[i][:])
+		cnt = 0 # resultant matrix, number of lines cleared
+		ptr = self.matrix.shape[0] - 1
+		# perform the update in-place
+		for i in reversed(range(self.matrix.shape[0])):
+			# z = 0
+			# for j in range(self.matrix.shape[1]):
+			# 	if self.matrix[i][j] == 0:
+			# 		z = 1
+			# 		break
+
+			if self.row_counts[i] < self.matrix.shape[1]:
+				if i != ptr:
+					self.matrix[ptr] = self.matrix[i]
+					self.row_counts[ptr] = self.row_counts[i]
+				ptr -= 1
+				# res.append(self.matrix[i][:])
+				# row_counts.append(self.row_counts[i])
 			else:
 				cnt += 1
-		while len(res) < self.matrix.shape[0]:
-			res.insert(0,np.zeros(self.matrix.shape[1]))
-		self.matrix = np.asarray(res,dtype=int)
+			# if not np.all((self.matrix[i] > 0)): 
+			# 	res.append(self.matrix[i][:])
+			# else:
+			# 	cnt += 1
+		while ptr >= 0:
+			if self.row_counts[i] > 0:
+				self.row_counts[i] = 0
+				self.matrix[i].fill(0)
+			ptr -= 1
+		# while len(res) < self.matrix.shape[0]:
+		# 	res.insert(0,np.zeros(self.matrix.shape[1]))
+		# 	row_counts.insert(0,0)
+		# self.matrix = np.asarray(res,dtype=int)
+		# self.row_counts = np.asarray(row_counts,dtype=int)
 		self.lines_cleared += cnt
 		if self.game_mode == constants.GameMode.JOURNEY:
 			self.level = self.lines_cleared//10 + 1
@@ -386,3 +436,24 @@ class Matrix:
 		
 	def copy(self):
 		return Matrix(matrix=self)
+
+
+
+if __name__ == '__main__':
+	matrix = Matrix()
+	matrix.addTetromino()
+
+	for i in range(10):
+		matrix.softDrop()
+
+	mat = matrix.matrix.copy()
+	print(mat)
+
+	ops = ["rotateCW", "rotateCCW", "rotate180", "shiftLeft", "shiftRight"]
+	for op in ops:
+		print(op)
+		getattr(matrix, op)()
+		print(matrix.matrix)
+		matrix.undo()
+		print(matrix.matrix)
+		assert(np.array_equal(mat, matrix.matrix))

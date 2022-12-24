@@ -50,10 +50,28 @@ class BotController:
         self.done = True
 
 if __name__ == '__main__':
-    ctrl = BotController(pps=3.0)
-    ctrl.start()
 
-    def kill_test():
-        ctrl.end()
+    def basic_test():
+        ctrl = BotController(pps=3.0)
+        ctrl.start()
 
-    threading.Timer(10.0, kill_test).start()
+        def kill_test():
+            ctrl.end()
+
+        threading.Timer(10.0, kill_test).start()
+
+    def tree_search_test():
+        from ..utils import matrix
+        mat = matrix.Matrix()
+        mat.addTetromino()
+
+        from .bot import HeuristicBot
+
+        h = HeuristicBot()
+        h.tree_search(mat)
+
+
+    TESTS = [tree_search_test]
+
+    for test in TESTS:
+        test()
