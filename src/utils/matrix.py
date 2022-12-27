@@ -65,6 +65,9 @@ class Matrix:
 		self.b2b = matrix.b2b if matrix is not None else False
 		self.prev2moves = copy.copy(matrix.prev2moves) if matrix is not None else []
 		self.prev_clear_text = copy.copy(matrix.prev_clear_text) if matrix is not None else []
+		self.prev_move_score = copy.copy(matrix.prev_move_score) if matrix is not None else 0 # score of previous move
+		self.prev_lines_cleared = copy.copy(matrix.prev_lines_cleared) if matrix is not None else 0 # number of lines cleared by previous move
+		self.cur_score_incr = copy.copy(matrix.cur_score_incr) if matrix is not None else 0 # score of current sequence of moves
 		self.clear_text = copy.copy(matrix.clear_text) if matrix is not None else [] # used by gameui
 		self.track_clear_text = copy.copy(matrix.track_clear_text) if matrix is not None else [] # used by gameui
 		self.clear_flag = matrix.clear_flag if matrix is not None else None # used by gameui
@@ -144,9 +147,12 @@ class Matrix:
 		if not self.zone_state:
 			# scoring
 			score_incr, clear_text, b2b_next = scoring.calcScore(self.matrix,self.current_tetromino,self.mino_locations,self.level,self.b2b,self.prev2moves)
-			self.score += score_incr
+			self.cur_score_incr += score_incr
+			self.score += self.cur_score_incr
 			self.b2b = b2b_next
 			self.prev_clear_text = clear_text
+			self.prev_move_score = self.cur_score_incr
+			self.cur_score_incr = 0
 
 			self.clearLines() # clear any filled lines before adding next tetromino
 			self.tetrominos.nextTetromino()
@@ -222,7 +228,7 @@ class Matrix:
 			if found: break
 			else: dist = r
 		self.translateTetromino(dist,0)
-		self.score += 2*dist
+		self.cur_score_incr += 2*dist
 		self.addTetromino()
 
 	def rotateCW(self):
@@ -263,7 +269,7 @@ class Matrix:
 			if i[0]+1 == self.matrix.shape[0] or (self.matrix[i[0]+1,i[1]] != 0 and (i[0]+1,i[1]) not in self.mino_locations): # cannot shift down further
 				return False
 		self.translateTetromino(1,0)
-		self.score += 1
+		self.cur_score_incr += 1
 		return True
 
 	def touchedStack(self): # checks whether tetromino has touched the matrix stack
@@ -297,6 +303,7 @@ class Matrix:
 			res.insert(0,np.zeros(self.matrix.shape[1]))
 		self.matrix = np.asarray(res,dtype=int)
 		self.lines_cleared += cnt
+		self.prev_lines_cleared = cnt
 		if self.game_mode == constants.GameMode.JOURNEY:
 			self.level = self.lines_cleared//10 + 1
 		if self.objective is not None:
@@ -304,7 +311,7 @@ class Matrix:
 				self.objective_met = True
 		self.current_zone = min(self.current_zone+cnt,self.full_zone)
 		self.combo = self.combo+1 if cnt > 0 else 0
-		self.score += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0
+		self.cur_score_incr += (self.combo-1) * 50 * self.level if self.combo > 1 and self.level != None else (self.combo-1) * 50 if self.combo > 1 else 0
 		if self.combo > 1:
 			self.prev_clear_text.append(str(self.combo-1)+" COMBO")
 		logger.info(self.prev_clear_text)
@@ -336,8 +343,10 @@ class Matrix:
 			self.current_zone = 0
 			self.zone_state = False
 			score_incr, clear_text = scoring.zoneScore(self.matrix)
-			self.score += score_incr
+			self.cur_score_incr += score_incr
 			self.prev_clear_text = clear_text
+			self.prev_move_score = self.cur_score_incr
+			self.cur_score_incr = 0
 			logger.info(self.prev_clear_text)
 			if not topped_out:
 				self.removeTetromino()

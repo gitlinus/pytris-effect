@@ -50,12 +50,31 @@ move_map = [
     "swapHold"
 ]
 
+good_clears = [
+    "MINI T-SPIN SINGLE",
+    "B2B MINI T-SPIN SINGLE",
+    "MINI T-SPIN DOUBLE",
+    "B2B MINI T-SPIN DOUBLE",
+    "QUADRUPLE",
+    "T-SPIN SINGLE",
+    "B2B T-SPIN SINGLE",
+    "B2B QUADRUPLE",
+    "T-SPIN DOUBLE",
+    "T-SPIN TRIPLE",
+    "B2B T-SPIN DOUBLE",
+    "B2B T-SPIN TRIPLE",
+    "PERFECT CLEAR",
+]
+
 class State:
         
-    def __init__(self, board, hold=None, cur=None):
+    def __init__(self, board, hold=None, cur=None, move_score=0, lines_cleared=0, clear_type=[]):
         self.board = board
         self.hold = hold
         self.cur = cur
+        self.move_score = move_score
+        self.lines_cleared = lines_cleared
+        self.clear_type = clear_type
 
 
 import cProfile
@@ -82,7 +101,44 @@ class HeuristicBot(Bot):
     def __init__(self):
         super().__init__()
 
-    def score(self, state : State):
+    def jaggedness_score(self, state : State): # favour keeping stack flat and avoid making islands
+        m = state.board
+        sm = 0
+        height_diff = 0
+        prev_height = None
+        for j in range(10):
+            for i in range(20):
+                if m[i+2][j] != 0:
+                    if (i+2, j) not in state.cur:
+                        if(j>0):
+                            sm += 1 if m[i+2][j-1] == 0 else 0
+                        if(j<9):
+                            sm += 1 if m[i+2][j+1] == 0 else 0
+                        if(i+2+1 < 22):
+                            sm += 10 if m[i+2+1][j] == 0 else 0 # please don't cover holes
+        for j in range(10):
+            for i in range(20):
+                if m[i+2][j] != 0:
+                    if (i+2, j) not in state.cur:
+                        if not prev_height:
+                            prev_height = i+2
+                            break
+                        else:
+                            height_diff += abs(i+2 - prev_height) if abs(i+2 - prev_height) > 1 else 0
+                            prev_height = i+2
+                            break
+        sm += height_diff/2
+        return -sm**2
+
+    def clear_score(self, state : State): # favour higher clear scores
+        if(state.lines_cleared == 0):
+            return 0
+        elif(any(x in state.clear_type for x in good_clears)):
+            return 2*state.move_score
+        else:
+            return -state.lines_cleared*200
+
+    def height_score(self, state : State): # favour staying low
         m = state.board
         sm = 0
         for j in range(10):
@@ -93,6 +149,9 @@ class HeuristicBot(Bot):
                         break
 
         return -sm
+
+    def score(self, state : State):
+        return self.jaggedness_score(state) + self.clear_score(state) + self.height_score(state)
             
     @profile
     def tree_search(self, gamestate):
@@ -140,7 +199,8 @@ class HeuristicBot(Bot):
                         parent_state_space[n] = (m, [idx])
                     vis_state_space[n] = True
                     if t:
-                        cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations))
+                        # import pdb; pdb.set_trace()
+                        cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations, move_score=res.prev_move_score, lines_cleared=res.prev_lines_cleared, clear_type=res.prev_clear_text))
                     else:
                         positions.append(res)
 
