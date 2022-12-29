@@ -66,34 +66,91 @@ good_clears = [
     "PERFECT CLEAR",
 ]
 
+tetromino_orientations = [
+    #I
+    np.array([[1,1,1,1]],dtype=int),
+    np.array([[1],
+              [1],
+              [1],
+              [1]],dtype=int),
+    #T
+    np.array([[0,1,0],
+              [1,1,1]],dtype=int),
+    np.array([[1,0],
+              [1,1],
+              [1,0]],dtype=int),
+    np.array([[1,1,1],
+              [0,1,0]],dtype=int),
+    np.array([[0,1],
+              [1,1],
+              [0,1]],dtype=int),
+    #S
+    np.array([[0,1,1],
+              [1,1,0]],dtype=int),
+    np.array([[1,0],
+              [1,1],
+              [0,1]],dtype=int),
+    #Z
+    np.array([[1,1,0],
+              [0,1,1]],dtype=int),
+    np.array([[0,1],
+              [1,1],
+              [1,0]],dtype=int),
+    #L
+    np.array([[0,0,1],
+              [1,1,1]],dtype=int),
+    np.array([[1,0],
+              [1,0],
+              [1,1]],dtype=int),
+    np.array([[1,1,1],
+              [1,0,0]],dtype=int),
+    np.array([[1,1],
+              [0,1],
+              [0,1]],dtype=int),
+    #J
+    np.array([[1,0,0],
+              [1,1,1]],dtype=int),
+    np.array([[1,1],
+              [1,0],
+              [1,0]],dtype=int),
+    np.array([[1,1,1],
+              [0,0,1]],dtype=int),
+    np.array([[0,1],
+              [0,1],
+              [1,1]],dtype=int),
+    #O
+    np.array([[1,1],
+              [1,1]],dtype=int),
+]
+
 # 0 = empty or filled (no weighting), -1 = must be empty (negative score if filled), 1 = must be filled (positive score if filled)
-# 2 = if any of the surrounding mask cells which are >=1 are filled, then itself must also be filled
-# 3 = extra weight if filled
+# 2 = extra weight if filled
 # right-overhang and left-overhang separately for now
 
 ro_tsd_mask = np.array([
-    [ 0,-1,-1, 3, 0],
+    [ 0,-1,-1, 2, 0],
     [ 1,-1,-1,-1, 1],
-    [ 1, 2,-1, 2, 1],
+    [ 1, 1,-1, 1, 1],
 ], dtype = int)
 
 lo_tsd_mask = np.array([
-    [ 0, 3,-1,-1, 0],
+    [ 0, 2,-1,-1, 0],
     [ 1,-1,-1,-1, 1],
-    [ 1, 2,-1, 2, 1],
+    [ 1, 1,-1, 1, 1],
 ], dtype = int)
 
 mask_list = [ro_tsd_mask, lo_tsd_mask]
 
 class State:
         
-    def __init__(self, board, hold=None, cur=None, move_score=0, lines_cleared=0, clear_type=[]):
+    def __init__(self, board, hold=None, cur=None, move_score=0, lines_cleared=0, clear_type=[], queue=[]):
         self.board = board
         self.hold = hold
         self.cur = cur
         self.move_score = move_score
         self.lines_cleared = lines_cleared
         self.clear_type = clear_type
+        self.queue = queue
 
 
 import cProfile
@@ -142,23 +199,55 @@ class HeuristicBot(Bot):
                                         break
                                     elif(m[i+2+mask_i][j+mask_j] * mask[mask_i][mask_j] > 0):
                                         cur_mask_score += 1
-                                        if(mask[mask_i][mask_j] == 3):
+                                        if(mask[mask_i][mask_j] == 2 and (m[i+2+mask_i][j+mask_j] != 6 or 'T' in state.queue)): # avoid using T for overhang unless it is in queue
                                             extra_weight += 10
                                     else:
-                                        if(mask[mask_i][mask_j] == 2):
-                                            for di in [-1,0,1]:
-                                                for dj in [-1,0,1]:
-                                                    if(di == 0 and dj == 0):
-                                                        continue
-                                                    if( 0 <= mask_i + di and mask_i + di < mask.shape[0] and
-                                                        0 <= mask_j + dj and mask_j + dj < mask.shape[1]):
-                                                        if(mask[mask_i+di][mask_j+dj] >= 1 and m[i+2+mask_i+di][j+mask_j+dj] != 0):
-                                                            valid = valid and m[i+2+mask_i][j+mask_j] != 0 # this cell must be filled in order to be valid
-                                                            if not valid:
+                                        # can the remaining mask be filled such that we do not violate mask requirements
+                                        # and none of the minos lie below the mask?
+                                        # - above, left, or right of the mask is fine so long as the mino lies within the matrix
+                                        if(mask[mask_i][mask_j] > 0):
+                                            ans = False
+                                            for to in tetromino_orientations:
+                                                for to_i in range(to.shape[0]):
+                                                    for to_j in range(to.shape[1]):
+                                                        # determine if we can fit this tetromino if (mask_i, mask_j) is at (to_i, to_j)
+                                                        if(to[to_i][to_j]==0):
+                                                            continue
+                                                        if(mask_i+(to.shape[0]-1-to_i) <= mask.shape[0]-1 and 0 <= j+mask_j-to_j and j+mask_j+(to.shape[1]-1-to_j) <= 9):
+                                                            # to[to_i][to_j] is at (mask_i,mask_j), therefore top-left of to is at (i+2+mask_i-to_i,j+mask_j-to_j)
+                                                            possible = True
+                                                            for ii in range(to.shape[0]):
+                                                                for jj in range(to.shape[1]):
+                                                                    if(0 <= mask_i-to_i+ii and mask_i-to_i+ii<=mask.shape[0]-1 and
+                                                                       0 <= mask_j-to_j+jj and mask_j-to_j+jj<=mask.shape[1]-1 ):
+                                                                       #inside mask
+                                                                        if(mask[mask_i-to_i+ii][mask_j-to_j+jj] + to[ii][jj] != mask[mask_i-to_i+ii][mask_j-to_j+jj]):
+                                                                            if(mask[mask_i-to_i+ii][mask_j-to_j+jj] < 0):
+                                                                                possible = False
+                                                                                break
+                                                                            elif(mask[mask_i-to_i+ii][mask_j-to_j+jj] > 0):
+                                                                                if(m[i+2+mask_i-to_i+ii][j+mask_j-to_j+jj] != 0):
+                                                                                    possible = False
+                                                                                    break
+                                                                    else:
+                                                                        #oustside mask
+                                                                        if(m[i+2+mask_i-to_i+ii][j+mask_j-to_j+jj] + to[ii][jj] != m[i+2+mask_i-to_i+ii][j+mask_j-to_j+jj]):
+                                                                            if(m[i+2+mask_i-to_i+ii][j+mask_j-to_j+jj] != 0):
+                                                                                possible = False
+                                                                                break
+                                                                if not possible:
+                                                                    break
+                                                            ans = ans or possible
+                                                            if ans:
                                                                 break
-                                                if not valid:
+                                                        else:
+                                                            continue
+                                                    if ans:
+                                                        break
+                                                if ans:
                                                     break
-                                            if not valid:
+                                            if not ans:
+                                                valid = False
                                                 break
                             if not valid:
                                 cur_mask_score = 0
@@ -183,6 +272,13 @@ class HeuristicBot(Bot):
                                         for jj in range(9 - (j+mask.shape[1]-1)):
                                             cur_mask_score += mask[ii][mask.shape[1]-1] if m[i+2+ii][j+mask.shape[1]-1+jj+1]==0 and mask[ii][mask.shape[1]-1]>=1 else 2*mask[ii][mask.shape[1]-1]
                                             mask_match += 2*mask[ii][mask.shape[1]-1]
+                                # extend mask all the way up
+                                for jj in range(mask.shape[1]):
+                                    if(mask[0][jj] == -1): # if this cell is empty, make sure everything all the way up is empty
+                                        for ii in range(20):
+                                            if(ii+2 < i+2 and (ii+2,j+jj) not in state.cur):
+                                                if(m[ii+2][j+jj] != 0):
+                                                    cur_mask_score -= 2
                                 # print(f"prefinal score of {cur_mask_score}")
                                 # how close are we to full mask match
                                 cur_mask_score = int(cur_mask_score**2 * cur_mask_score / mask_match + 1) + extra_weight**2
@@ -220,7 +316,7 @@ class HeuristicBot(Bot):
                             height_diff += abs(i+2 - prev_height) if abs(i+2 - prev_height) > 1 else 0
                             prev_height = i+2
                             break
-        sm += height_diff/2
+        sm += height_diff # penalize creating dependencies
         return -sm**2
 
     def clear_score(self, state : State): # favour higher clear scores
@@ -293,7 +389,7 @@ class HeuristicBot(Bot):
                     vis_state_space[n] = True
                     if t:
                         # import pdb; pdb.set_trace()
-                        cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations, move_score=res.prev_move_score, lines_cleared=res.prev_lines_cleared, clear_type=res.prev_clear_text))
+                        cand_position.append(State(board=res.matrix, hold=None, cur=res.mino_locations, move_score=res.prev_move_score, lines_cleared=res.prev_lines_cleared, clear_type=res.prev_clear_text, queue=res.tetrominos.queue[0:5]))
                     else:
                         positions.append(res)
 

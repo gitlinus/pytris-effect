@@ -31,9 +31,9 @@ class BotController:
         elapsed = 0
         while not self.done:
             try:
-                start = time.time()
+                # start = time.time()
                 moves = self.bot.get_move(self.gamestate)
-                elapsed = time.time() - start
+                # elapsed = time.time() - start
 
                 with self.lock:
                     self.queue.extend(moves)
